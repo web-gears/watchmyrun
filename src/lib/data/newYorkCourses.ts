@@ -29,13 +29,13 @@ export const RACE_DISTANCES: RaceDistanceOption[] = [
     defaultPace: '04:58',
     course: NEW_YORK_COURSES['marathon'],
     cheerPresets: [
-      { id: 'm_4', name: 'Bay Ridge (4th Ave & 86th St)', mile: 4.0, distM: 6437, description: 'Brooklyn crowd takeoff point' },
-      { id: 'm_8', name: 'Park Slope (4th Ave & 9th St)', mile: 8.0, distM: 12875, description: 'Epic live music & neighborhood cheers' },
-      { id: 'm_11_5', name: 'Williamsburg (Bedford Ave)', mile: 11.5, distM: 18507, description: 'Eclectic hipster cheer hub' },
-      { id: 'm_16', name: 'Queensboro Exit (1st Ave & 59th)', mile: 16.0, distM: 25750, description: 'Wall of sound into Manhattan' },
-      { id: 'm_20_5', name: 'Harlem (5th Ave & 125th St)', mile: 20.5, distM: 32992, description: 'High-energy gospel & drumlines' },
-      { id: 'm_23', name: 'Museum Mile (5th Ave & 90th St)', mile: 23.0, distM: 37015, description: 'Crucial push before Central Park' },
-      { id: 'm_25_5', name: 'Central Park South (Columbus Circle)', mile: 25.5, distM: 41038, description: 'Final charge toward the finish line' },
+      { id: 'm_4', name: 'Bay Ridge (4th Ave & 86th St)', mile: 4.0, distM: 6437, description: '4th Ave spectator area' },
+      { id: 'm_8', name: 'Park Slope (4th Ave & 9th St)', mile: 8.0, distM: 12875, description: '4th Ave & 9th St cheer zone' },
+      { id: 'm_11_5', name: 'Williamsburg (Bedford Ave)', mile: 11.5, distM: 18507, description: 'Bedford Ave cheer zone' },
+      { id: 'm_16', name: 'Queensboro Exit (1st Ave & 59th)', mile: 16.0, distM: 25750, description: 'Queensboro Bridge exit onto 1st Ave' },
+      { id: 'm_20_5', name: 'Harlem (5th Ave & 125th St)', mile: 20.5, distM: 32992, description: '5th Ave & 125th St spectator area' },
+      { id: 'm_23', name: 'Museum Mile (5th Ave & 90th St)', mile: 23.0, distM: 37015, description: 'Museum Mile spectator area' },
+      { id: 'm_25_5', name: 'Central Park South (Columbus Circle)', mile: 25.5, distM: 41038, description: 'Columbus Circle spectator area' },
     ],
   },
   {
@@ -48,10 +48,10 @@ export const RACE_DISTANCES: RaceDistanceOption[] = [
     defaultPace: '04:58',
     course: NEW_YORK_COURSES['half'],
     cheerPresets: [
-      { id: 'h_4', name: 'Bay Ridge (4th Ave & 86th St)', mile: 4.0, distM: 6437, description: 'Fast Brooklyn straightaway' },
-      { id: 'h_8', name: 'Park Slope (4th Ave & 9th St)', mile: 8.0, distM: 12875, description: 'Rowdy cheer station & subway access' },
-      { id: 'h_11', name: 'Williamsburg (Bedford & Grand)', mile: 11.0, distM: 17703, description: 'Peak energy street party' },
-      { id: 'h_12_8', name: 'Pulaski Bridge Approach', mile: 12.8, distM: 20600, description: 'Final sprint stretch to the finish' },
+      { id: 'h_4', name: 'Bay Ridge (4th Ave & 86th St)', mile: 4.0, distM: 6437, description: '4th Ave spectator area' },
+      { id: 'h_8', name: 'Park Slope (4th Ave & 9th St)', mile: 8.0, distM: 12875, description: '4th Ave & 9th St spectator area' },
+      { id: 'h_11', name: 'Williamsburg (Bedford & Grand)', mile: 11.0, distM: 17703, description: 'Bedford Ave spectator area' },
+      { id: 'h_12_8', name: 'Pulaski Bridge Approach', mile: 12.8, distM: 20600, description: 'Pulaski Bridge approach' },
     ],
   },
   {
@@ -64,9 +64,9 @@ export const RACE_DISTANCES: RaceDistanceOption[] = [
     defaultPace: '05:00',
     course: NEW_YORK_COURSES['10k'],
     cheerPresets: [
-      { id: '10k_2', name: 'Verrazzano Bridge Descent', mile: 2.0, distM: 3219, description: 'Touchdown into Brooklyn' },
-      { id: '10k_3_5', name: 'Bay Ridge (4th Ave & 95th St)', mile: 3.5, distM: 5633, description: 'Lively Brooklyn neighborhood support' },
-      { id: '10k_5_5', name: 'Sunset Park (4th Ave & 60th St)', mile: 5.5, distM: 8851, description: 'Final push toward the 10K finish' },
+      { id: '10k_2', name: 'Verrazzano Bridge Descent', mile: 2.0, distM: 3219, description: 'Verrazzano Bridge exit into Brooklyn' },
+      { id: '10k_3_5', name: 'Bay Ridge (4th Ave & 95th St)', mile: 3.5, distM: 5633, description: 'Bay Ridge 4th Ave spectator area' },
+      { id: '10k_5_5', name: 'Sunset Park (4th Ave & 60th St)', mile: 5.5, distM: 8851, description: 'Sunset Park 4th Ave spectator area' },
     ],
   },
   {
@@ -79,9 +79,9 @@ export const RACE_DISTANCES: RaceDistanceOption[] = [
     defaultPace: '05:00',
     course: NEW_YORK_COURSES['5k'],
     cheerPresets: [
-      { id: '5k_1', name: 'Fort Wadsworth Approach', mile: 1.0, distM: 1609, description: 'Opening mile crowd excitement' },
-      { id: '5k_2', name: 'Verrazzano Bridge Mid-Span', mile: 2.0, distM: 3219, description: 'Panoramic harbor vistas & encouragement' },
-      { id: '5k_2_8', name: 'Shore Road Finish Approach', mile: 2.8, distM: 4506, description: 'Loud homestretch celebration' },
+      { id: '5k_1', name: 'Fort Wadsworth Approach', mile: 1.0, distM: 1609, description: 'Fort Wadsworth start area' },
+      { id: '5k_2', name: 'Verrazzano Bridge Mid-Span', mile: 2.0, distM: 3219, description: 'Verrazzano Bridge mid-span' },
+      { id: '5k_2_8', name: 'Shore Road Finish Approach', mile: 2.8, distM: 4506, description: 'Shore Road finish approach' },
     ],
   },
 ];

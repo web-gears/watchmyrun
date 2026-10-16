@@ -90,7 +90,7 @@ export function SpectatorWindowCard({
                 </Text>
               </Group>
               <Text size="11px" c="dimmed">
-                Window: <b>{nextSpot.windowEarly} – {nextSpot.windowLate}</b>
+                Window: <b>{nextSpot.windowEarly} - {nextSpot.windowLate}</b>
               </Text>
             </div>
             <div style={{ textAlign: 'right' }}>
@@ -146,7 +146,7 @@ export function SpectatorWindowCard({
 
                   {!w.hasRunnerPassed && (
                     <Text size="10px" c="dimmed" mt={2}>
-                      Window: <b style={{ color: '#d97706' }}>{w.windowEarly} – {w.windowLate}</b> (± uncertainty)
+                      Window: <b style={{ color: '#d97706' }}>{w.windowEarly} - {w.windowLate}</b> (± uncertainty)
                     </Text>
                   )}
                 </div>

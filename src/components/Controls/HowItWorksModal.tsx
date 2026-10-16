@@ -99,14 +99,14 @@ export function HowItWorksModal({
             <div>
               <Group gap={8} align="center">
                 <Text fw={800} size="md" style={{ letterSpacing: '-0.02em' }}>
-                  Don&apos;t carry a phone — an AirTag is all you need.
+                  Phone-free tracking with an AirTag
                 </Text>
                 <Badge size="xs" variant="filled" color="cyan">
                   Phone-Free Racing
                 </Badge>
               </Group>
               <Text size="xs" c="dimmed" mt={2}>
-                Marathoners shouldn&apos;t have to run with a bouncing 200g phone in their waistband or worry about battery death from cellular GPS apps.
+                Runners can leave their phones behind. Track progress using an AirTag or visual checkpoints.
               </Text>
             </div>
           </Group>
@@ -122,7 +122,7 @@ export function HowItWorksModal({
                     1. Run Phone-Free
                   </Text>
                   <Text size="11px" c="dimmed" mt={2} style={{ lineHeight: 1.3 }}>
-                    No running belts, armbands, or battery anxiety. Race light and free for 26.2 miles.
+                    Run without carrying a phone, wearing an armband, or draining battery.
                   </Text>
                 </div>
               </Group>
@@ -135,10 +135,10 @@ export function HowItWorksModal({
                 </ThemeIcon>
                 <div>
                   <Text fw={700} size="xs">
-                    2. AirTag Is Enough
+                    2. AirTag or Sightings
                   </Text>
                   <Text size="11px" c="dimmed" mt={2} style={{ lineHeight: 1.3 }}>
-                    Clip an AirTag to shoelaces, pin it under your bib, or tuck it in a waistband pouch.
+                    Clip an AirTag to laces, attach to a bib, or update progress via crowd sightings.
                   </Text>
                 </div>
               </Group>
@@ -151,10 +151,10 @@ export function HowItWorksModal({
                 </ThemeIcon>
                 <div>
                   <Text fw={700} size="xs">
-                    3. Exact Cheer ETAs
+                    3. Cheer Station ETAs
                   </Text>
                   <Text size="11px" c="dimmed" mt={2} style={{ lineHeight: 1.3 }}>
-                    Spectators get minute-by-minute countdowns and arrival windows at every cheer station.
+                    Spectators get estimated arrival windows and live countdowns at each cheer spot.
                   </Text>
                 </div>
               </Group>
@@ -165,19 +165,19 @@ export function HowItWorksModal({
         {/* Step-by-Step Walkthrough */}
         <div>
           <Text fw={700} size="sm" mb="xs">
-            Step-by-Step Race Day Guide:
+            How it works:
           </Text>
 
           <Timeline active={3} bulletSize={24} lineWidth={2} color="cyan">
             <Timeline.Item bullet={<IconFlag size={12} />} title="1. Runner Setup (Before the Race)">
               <Text size="xs" c="dimmed" mt={2}>
-                Clip an Apple AirTag to your shoelaces, pin it under your race bib, or slip it in a waistband pocket. Tap the <b>Share</b> button at the top to copy your personal race tracking link and send it to your cheering squad.
+                Attach an Apple AirTag to shoelaces, bib, or pocket. Tap <b>Share</b> to copy your tracking link and send it to friends and family.
               </Text>
             </Timeline.Item>
 
             <Timeline.Item bullet={<IconClock size={12} />} title="2. Spectator Setup (Race Morning)">
               <Text size="xs" c="dimmed" mt={2}>
-                Open the link to view the course. Confirm the runner&apos;s start wave and target goal time. Check race morning conditions and what to wear at{' '}
+                Open the link to view the course, start wave, and target pace. Check race weather at{' '}
                 <a
                   href="https://run-weather.com/"
                   target="_blank"
@@ -186,19 +186,19 @@ export function HowItWorksModal({
                 >
                   Run-Weather.com
                 </a>
-                . Under <b>Spectator Cheer Stations</b>, tap the landmark stations where you plan to cheer (e.g. Wellesley Scream Tunnel, Heartbreak Hill, Tower Bridge, Central Park).
+                . Under <b>Spectator Cheer Stations</b>, select the spots where you plan to watch.
               </Text>
             </Timeline.Item>
 
             <Timeline.Item bullet={<IconMapPin size={12} />} title="3. Live Sighting Pins (During the Race)">
               <Text size="xs" c="dimmed" mt={2}>
-                Whenever you get an Apple Find My / AirTag ping or a visual crowd sighting, tap <b>&quot;Drop Pin&quot;</b> and click where the runner was seen. The engine automatically snaps to course elevation, recalibrates live pace, and updates the projected finish time.
+                When an AirTag location updates or you spot the runner, tap <b>&quot;Drop Pin&quot;</b> and mark the location. The app recalibrates live pace and updates arrival estimates.
               </Text>
             </Timeline.Item>
 
             <Timeline.Item bullet={<IconCheck size={12} />} title="4. Cheer on Time at Every Spot">
               <Text size="xs" c="dimmed" mt={2}>
-                The floating <b>Spectator Card</b> displays a live countdown (e.g. <i>&quot;Arriving in 14 mins&quot;</i>) with a confidence meeting window so you know exactly when to stand by the barriers.
+                The <b>Spectator Card</b> shows estimated arrival times and arrival windows for each cheer station.
               </Text>
             </Timeline.Item>
           </Timeline>
@@ -263,7 +263,7 @@ export function HowItWorksModal({
                   Support WatchMy.Run
                 </Text>
                 <Text size="11px" c="dimmed">
-                  Free &amp; ad-free project. If this helps cheer your runner, consider buying a coffee!
+                  Free and ad-free project. If this helps on race day, you can support development via Ko-fi.
                 </Text>
               </div>
             </Group>
@@ -332,7 +332,7 @@ export function HowItWorksModal({
           )}
 
           <Button variant="filled" color="cyan" onClick={onClose} size="sm">
-            Got It! Start Tracking
+            Start Tracking
           </Button>
         </Group>
 

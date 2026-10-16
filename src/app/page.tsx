@@ -785,15 +785,15 @@ export default function MarathonTrackerPage() {
                 }}
               >
                 <Text size="xs" fw={700} c="cyan.8">
-                  🏃 Don&apos;t carry a phone — an AirTag is all you need!
+                  Phone-free tracking with AirTag or sightings
                 </Text>
                 <Text size="11px" c="dimmed" mt={2}>
-                  Runners don&apos;t need to carry a heavy phone for 26.2 miles. Clip an AirTag to shoelaces, pin it under the race bib, or tuck it in a waistband pouch. Drop pins whenever an AirTag ping or crowd sighting occurs to recalibrate live speed and calculate exact cheer spot arrival times.
+                  Track your runner using AirTag updates or visual sightings along the course. Drop pins to update live pace and cheer station arrival windows.
                 </Text>
               </Box>
 
               <Text size="xs" c="dimmed" mb="xs">
-                Enter your runner&apos;s expected pace in the left panel, choose a goal preset below, or drop a tracking pin to begin live position forecasting:
+                Select a goal time below or set custom pace in the controls panel:
               </Text>
 
               <Group gap="xs" wrap="wrap">
