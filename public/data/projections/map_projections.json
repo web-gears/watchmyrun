@@ -1,0 +1,149 @@
+{
+  "global_standard_crs": {
+    "geographic_crs": {
+      "name": "WGS 84",
+      "epsg": "EPSG:4326",
+      "units": "decimal degrees (longitude, latitude)",
+      "ellipsoid": "WGS 84 (a=6378137.0 m, 1/f=298.257223563)",
+      "usage": "GPS chips, GeoJSON standard (RFC 7946), raw track logging"
+    },
+    "web_projected_crs": {
+      "name": "WGS 84 / Pseudo-Mercator (Web Mercator)",
+      "epsg": "EPSG:3857",
+      "units": "meters",
+      "usage": "Mapbox, Google Maps, Apple Maps, Leaflet, OpenStreetMap slippy tiles",
+      "distortion": "High area distortion at higher latitudes (scales by sec(lat)); not recommended for geodesic length calculations without cos(lat) correction factor"
+    }
+  },
+  "local_conformal_projections": {
+    "new_york": {
+      "state_plane": {
+        "name": "NAD83 / New York Long Island (ftUS)",
+        "epsg": "EPSG:2263",
+        "projection_type": "Lambert Conformal Conic",
+        "units": "US survey foot",
+        "scale_factor": 1.0,
+        "bounds": [
+          -74.26,
+          40.47,
+          -71.85,
+          41.31
+        ]
+      },
+      "utm": {
+        "name": "WGS 84 / UTM Zone 18N",
+        "epsg": "EPSG:32618",
+        "projection_type": "Transverse Mercator",
+        "units": "meters",
+        "central_meridian": -75.0,
+        "scale_factor_at_cm": 0.9996
+      }
+    },
+    "boston": {
+      "state_plane": {
+        "name": "NAD83 / Massachusetts Mainland",
+        "epsg": "EPSG:26986",
+        "projection_type": "Lambert Conformal Conic (2SP)",
+        "units": "meters",
+        "bounds": [
+          -73.5,
+          41.46,
+          -69.86,
+          42.89
+        ]
+      },
+      "utm": {
+        "name": "WGS 84 / UTM Zone 19N",
+        "epsg": "EPSG:32619",
+        "projection_type": "Transverse Mercator",
+        "units": "meters",
+        "central_meridian": -69.0,
+        "scale_factor_at_cm": 0.9996
+      }
+    },
+    "chicago": {
+      "state_plane": {
+        "name": "NAD83 / Illinois East (ftUS)",
+        "epsg": "EPSG:3435",
+        "projection_type": "Transverse Mercator",
+        "units": "US survey foot",
+        "bounds": [
+          -88.3,
+          38.3,
+          -87.5,
+          42.5
+        ]
+      },
+      "utm": {
+        "name": "WGS 84 / UTM Zone 16N",
+        "epsg": "EPSG:32616",
+        "projection_type": "Transverse Mercator",
+        "units": "meters",
+        "central_meridian": -87.0,
+        "scale_factor_at_cm": 0.9996
+      }
+    },
+    "london": {
+      "national_grid": {
+        "name": "OSGB36 / British National Grid",
+        "epsg": "EPSG:27700",
+        "projection_type": "Transverse Mercator",
+        "units": "meters",
+        "datum": "Ordnance Survey Great Britain 1936",
+        "central_meridian": -2.0,
+        "scale_factor_at_cm": 0.9996012717
+      },
+      "utm": {
+        "name": "WGS 84 / UTM Zone 30N",
+        "epsg": "EPSG:32630",
+        "projection_type": "Transverse Mercator",
+        "units": "meters",
+        "central_meridian": -3.0
+      }
+    },
+    "berlin": {
+      "national_utm": {
+        "name": "ETRS89 / UTM Zone 33N",
+        "epsg": "EPSG:25833",
+        "projection_type": "Transverse Mercator",
+        "units": "meters",
+        "datum": "European Terrestrial Reference System 1989",
+        "central_meridian": 15.0
+      }
+    },
+    "tokyo": {
+      "plane_rectangular": {
+        "name": "JGD2011 / Japan Plane Rectangular CS IX",
+        "epsg": "EPSG:6677",
+        "projection_type": "Transverse Mercator",
+        "units": "meters",
+        "datum": "Japanese Geodetic Datum 2011",
+        "origin": [
+          36.0,
+          139.833333333
+        ]
+      },
+      "utm": {
+        "name": "WGS 84 / UTM Zone 54N",
+        "epsg": "EPSG:32654",
+        "projection_type": "Transverse Mercator",
+        "units": "meters",
+        "central_meridian": 141.0
+      }
+    }
+  },
+  "mathematical_projections_for_distance_forecast": {
+    "equirectangular_flat_earth_approximation": {
+      "formula": "x = R * (lambda2 - lambda1) * cos((phi1 + phi2)/2); y = R * (phi2 - phi1); d = sqrt(x^2 + y^2)",
+      "error_at_marathon_scale": "< 0.05% error across a 42km bounding box",
+      "computational_cost": "Extremely low, O(1), no spherical trigonometry required, ideal for real-time mobile tracking"
+    },
+    "great_circle_haversine": {
+      "formula": "a = sin^2(dphi/2) + cos(phi1)*cos(phi2)*sin^2(dlambda/2); c = 2*atan2(sqrt(a), sqrt(1-a)); d = R*c",
+      "error": "< 0.2% compared to WGS-84 geodesic ellipsoidal models"
+    },
+    "vincenty_geodesic": {
+      "accuracy": "Millimeter level precision on oblate ellipsoid (GRS 80 / WGS 84)"
+    }
+  }
+}

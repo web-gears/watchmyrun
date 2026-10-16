@@ -1,0 +1,122 @@
+{
+  "new_york": {
+    "title": "TCS New York City Marathon",
+    "points": 455,
+    "total_distance_m": 42608.2,
+    "total_distance_km": 42.608,
+    "total_distance_mi": 26.476,
+    "start_ele_m": 48.3,
+    "finish_ele_m": 23.8,
+    "net_ele_m": -24.5,
+    "min_ele_m": 3.0,
+    "max_ele_m": 54.9,
+    "gain_m": 89.2,
+    "loss_m": 113.7,
+    "bbox": [
+      -74.059344,
+      40.601905,
+      -73.924256,
+      40.8148
+    ]
+  },
+  "boston": {
+    "title": "Boston Marathon",
+    "points": 1381,
+    "total_distance_m": 42427.8,
+    "total_distance_km": 42.428,
+    "total_distance_mi": 26.363,
+    "start_ele_m": 139.0,
+    "finish_ele_m": 5.0,
+    "net_ele_m": -134.0,
+    "min_ele_m": 3.1,
+    "max_ele_m": 139.0,
+    "gain_m": 187.5,
+    "loss_m": 321.5,
+    "bbox": [
+      -71.518245,
+      42.22975,
+      -71.078534,
+      42.349773
+    ]
+  },
+  "chicago": {
+    "title": "Bank of America Chicago Marathon",
+    "points": 163,
+    "total_distance_m": 42808.0,
+    "total_distance_km": 42.808,
+    "total_distance_mi": 26.6,
+    "start_ele_m": 183.7,
+    "finish_ele_m": 182.0,
+    "net_ele_m": -1.7,
+    "min_ele_m": 179.2,
+    "max_ele_m": 183.7,
+    "gain_m": 6.1,
+    "loss_m": 7.8,
+    "bbox": [
+      -87.676567,
+      41.831038,
+      -87.620191,
+      41.952921
+    ]
+  },
+  "london": {
+    "title": "TCS London Marathon",
+    "points": 909,
+    "total_distance_m": 42291.3,
+    "total_distance_km": 42.291,
+    "total_distance_mi": 26.279,
+    "start_ele_m": 41.0,
+    "finish_ele_m": 6.0,
+    "net_ele_m": -35.0,
+    "min_ele_m": 2.0,
+    "max_ele_m": 51.9,
+    "gain_m": 71.8,
+    "loss_m": 106.8,
+    "bbox": [
+      -0.14004,
+      51.47309,
+      0.06342,
+      51.51278
+    ]
+  },
+  "berlin": {
+    "title": "BMW Berlin-Marathon",
+    "points": 606,
+    "total_distance_m": 42745.8,
+    "total_distance_km": 42.746,
+    "total_distance_mi": 26.561,
+    "start_ele_m": 34.0,
+    "finish_ele_m": 35.5,
+    "net_ele_m": 1.5,
+    "min_ele_m": 34.0,
+    "max_ele_m": 51.3,
+    "gain_m": 33.6,
+    "loss_m": 32.1,
+    "bbox": [
+      13.28105,
+      52.46753,
+      13.429093,
+      52.52973
+    ]
+  },
+  "tokyo": {
+    "title": "Tokyo Marathon",
+    "points": 2922,
+    "total_distance_m": 42290.8,
+    "total_distance_km": 42.291,
+    "total_distance_mi": 26.278,
+    "start_ele_m": 55.0,
+    "finish_ele_m": 30.0,
+    "net_ele_m": -25.0,
+    "min_ele_m": 3.5,
+    "max_ele_m": 68.9,
+    "gain_m": 664.3,
+    "loss_m": 689.3,
+    "bbox": [
+      139.692341,
+      35.646053,
+      139.799511,
+      35.710807
+    ]
+  }
+}

@@ -1,0 +1,379 @@
+{
+  "new_york": {
+    "race_name": "TCS New York City Marathon",
+    "host_city": "New York City, NY, USA",
+    "annual_date": "First Sunday in November (e.g. November 1, 2026 / November 2, 2025)",
+    "start_location": "Fort Wadsworth, Staten Island (Verrazzano-Narrows Bridge)",
+    "finish_location": "Tavern on the Green, Central Park West & 67th St, Manhattan",
+    "course_cutoff_time": "13:45 min/mile pace (~6 hours after last wave start, sweep bus ends ~7:30 PM)",
+    "start_waves": [
+      {
+        "wave": "Professional Wheelchairs",
+        "time": "08:00:00",
+        "description": "Men & Women Wheelchair Division"
+      },
+      {
+        "wave": "Handcycle & Select AWD",
+        "time": "08:22:00",
+        "description": "Handcycle category & athletes with disabilities"
+      },
+      {
+        "wave": "Professional Women",
+        "time": "08:40:00",
+        "description": "Elite Women Open Division"
+      },
+      {
+        "wave": "Professional Men",
+        "time": "09:05:00",
+        "description": "Elite Men Open Division"
+      },
+      {
+        "wave": "Wave 1",
+        "time": "09:10:00",
+        "corral_colors": [
+          "Blue",
+          "Orange",
+          "Green"
+        ],
+        "corrals": "A to F",
+        "projected_finish_paces": "< 3h15m (< 7:26 min/mi)"
+      },
+      {
+        "wave": "Wave 2",
+        "time": "09:45:00",
+        "corral_colors": [
+          "Blue",
+          "Orange",
+          "Green"
+        ],
+        "corrals": "A to F",
+        "projected_finish_paces": "3h15m - 3h45m (7:26 - 8:35 min/mi)"
+      },
+      {
+        "wave": "Wave 3",
+        "time": "10:20:00",
+        "corral_colors": [
+          "Blue",
+          "Orange",
+          "Green"
+        ],
+        "corrals": "A to F",
+        "projected_finish_paces": "3h45m - 4h15m (8:35 - 9:43 min/mi)"
+      },
+      {
+        "wave": "Wave 4",
+        "time": "10:55:00",
+        "corral_colors": [
+          "Blue",
+          "Orange",
+          "Green"
+        ],
+        "corrals": "A to F",
+        "projected_finish_paces": "4h15m - 4h55m (9:43 - 11:15 min/mi)"
+      },
+      {
+        "wave": "Wave 5",
+        "time": "11:30:00",
+        "corral_colors": [
+          "Blue",
+          "Orange",
+          "Green"
+        ],
+        "corrals": "A to F",
+        "projected_finish_paces": "> 4h55m (> 11:15 min/mi)"
+      }
+    ],
+    "course_peculiarities": [
+      "Three distinct colored start staging routes (Blue, Orange, Green) on Verrazzano-Narrows Bridge: Blue & Orange run on upper deck, Green runs on lower deck.",
+      "All routes converge at Fourth Avenue & 92nd Street in Brooklyn (approx Mile 3 / 4.8 km).",
+      "Five major bridges: Verrazzano (mi 1-2), Pulaski (mi 13.1), Queensboro (mi 15-16), Willis Ave (mi 20), Madison Ave (mi 21)."
+    ]
+  },
+  "boston": {
+    "race_name": "Boston Marathon (B.A.A.)",
+    "host_city": "Hopkinton to Boston, MA, USA",
+    "annual_date": "Third Monday of April (Patriots' Day, e.g. April 20, 2026 / April 21, 2025)",
+    "start_location": "Main Street, Hopkinton, MA",
+    "finish_location": "Boylston Street near Copley Square, Boston, MA",
+    "course_cutoff_time": "6 hours after the last runner crosses the start line (~5:30 PM)",
+    "start_waves": [
+      {
+        "wave": "Men's Wheelchair",
+        "time": "09:02:00",
+        "description": "Push rim wheelchair men"
+      },
+      {
+        "wave": "Women's Wheelchair",
+        "time": "09:05:00",
+        "description": "Push rim wheelchair women"
+      },
+      {
+        "wave": "Handcycles & Duos",
+        "time": "09:30:00",
+        "description": "Handcycle program and duo teams"
+      },
+      {
+        "wave": "Professional Men",
+        "time": "09:37:00",
+        "description": "Elite Men"
+      },
+      {
+        "wave": "Professional Women",
+        "time": "09:47:00",
+        "description": "Elite Women"
+      },
+      {
+        "wave": "Para Athletics Division",
+        "time": "09:50:00",
+        "description": "Ambulatory Para divisions"
+      },
+      {
+        "wave": "Wave 1",
+        "time": "10:00:00",
+        "bib_numbers": "1 - 7,999",
+        "projected_finish_paces": "< 3h00m (< 6:52 min/mi)"
+      },
+      {
+        "wave": "Wave 2",
+        "time": "10:25:00",
+        "bib_numbers": "8,000 - 15,999",
+        "projected_finish_paces": "3h00m - 3h25m (6:52 - 7:49 min/mi)"
+      },
+      {
+        "wave": "Wave 3",
+        "time": "10:50:00",
+        "bib_numbers": "16,000 - 23,999",
+        "projected_finish_paces": "3h25m - 3h55m (7:49 - 8:58 min/mi)"
+      },
+      {
+        "wave": "Wave 4",
+        "time": "11:15:00",
+        "bib_numbers": "24,000 - 33,000+",
+        "projected_finish_paces": "> 3h55m (> 8:58 min/mi)"
+      }
+    ],
+    "course_peculiarities": [
+      "Point-to-point course from west to east; prevailing wind (headwind vs tailwind) has massive impact on times.",
+      "First 4 miles drop over 200 feet, tempting early over-pacing and eccentric quad damage.",
+      "Newton Hills from Mile 16 to 21 (Firehouse Hill, Commonwealth Ave hills, Heartbreak Hill at Mile 20.5).",
+      "Iconic final turns: Right on Hereford, Left on Boylston."
+    ]
+  },
+  "chicago": {
+    "race_name": "Bank of America Chicago Marathon",
+    "host_city": "Chicago, IL, USA",
+    "annual_date": "Sunday of Columbus Day weekend in October (e.g. October 11, 2026 / October 12, 2025)",
+    "start_location": "Grant Park (Columbus Drive & Monroe St), Chicago, IL",
+    "finish_location": "Grant Park (Columbus Drive & Roosevelt Rd), Chicago, IL",
+    "course_cutoff_time": "6 hours 30 minutes from crossing the start line (15 min/mile pace)",
+    "start_waves": [
+      {
+        "wave": "Wheelchair Men",
+        "time": "07:20:00",
+        "description": "Men wheelchair division"
+      },
+      {
+        "wave": "Wheelchair Women",
+        "time": "07:21:00",
+        "description": "Women wheelchair division"
+      },
+      {
+        "wave": "Handcycle",
+        "time": "07:23:00",
+        "description": "Handcycle category"
+      },
+      {
+        "wave": "Wave 1",
+        "time": "07:30:00",
+        "corrals": [
+          "A",
+          "B",
+          "C",
+          "D",
+          "E"
+        ],
+        "projected_finish_paces": "< 3h15m (< 7:26 min/mi)"
+      },
+      {
+        "wave": "Wave 2",
+        "time": "08:00:00",
+        "corrals": [
+          "F",
+          "G",
+          "H"
+        ],
+        "projected_finish_paces": "3h15m - 4h00m (7:26 - 9:09 min/mi)"
+      },
+      {
+        "wave": "Wave 3",
+        "time": "08:35:00",
+        "corrals": [
+          "J",
+          "K",
+          "L",
+          "M",
+          "N"
+        ],
+        "projected_finish_paces": "> 4h00m (> 9:09 min/mi)"
+      }
+    ],
+    "course_peculiarities": [
+      "World record course (Kelvin Kiptum 2:00:35, Ruth Chepngetich 2:09:56).",
+      "Loop through 29 Chicago neighborhoods (North to Lincoln Park, West to Near West, South to Pilsen & Chinatown).",
+      "Tall skyscrapers in downtown Loop (miles 1-3) induce severe GPS drift / multipath reflections.",
+      "Pancake flat elevation profile; only notable gradient is the 'Mount Roosevelt' overpass at mile 26 before the finish."
+    ]
+  },
+  "london": {
+    "race_name": "TCS London Marathon",
+    "host_city": "London, England, UK",
+    "annual_date": "Third or Fourth Sunday of April (e.g. April 26, 2026 / April 27, 2025)",
+    "start_location": "Blackheath / Greenwich Park, London",
+    "finish_location": "The Mall near Buckingham Palace, London",
+    "course_cutoff_time": "8 hours from the final start crossing",
+    "start_waves": [
+      {
+        "wave": "Elite Wheelchairs",
+        "time": "08:50:00",
+        "description": "Wheelchair racing division"
+      },
+      {
+        "wave": "Elite Women",
+        "time": "09:00:00",
+        "description": "Elite Women"
+      },
+      {
+        "wave": "Elite Men & Mass Wave 1",
+        "time": "09:40:00",
+        "start_zones": [
+          "Blue",
+          "Green",
+          "Red",
+          "Yellow"
+        ],
+        "corrals": "Fastest seeded"
+      },
+      {
+        "wave": "Mass Wave 2-8",
+        "time": "09:45:00 - 11:30:00",
+        "start_zones": [
+          "Blue",
+          "Green",
+          "Red",
+          "Yellow"
+        ],
+        "interval": "Every 5-10 minutes"
+      }
+    ],
+    "course_peculiarities": [
+      "Three separate starts (Blue from Blackheath, Red from Greenwich Park, Green from St John's) converge at Woolwich (approx Mile 2.8).",
+      "Passes historic Cutty Sark (mile 6), Tower Bridge (mile 12.5), Canary Wharf loop (miles 14-20), Embankment (miles 23-25), Big Ben / Parliament, and finishes at The Mall."
+    ]
+  },
+  "berlin": {
+    "race_name": "BMW Berlin-Marathon",
+    "host_city": "Berlin, Germany",
+    "annual_date": "Last Sunday of September (e.g. September 27, 2026 / September 28, 2025)",
+    "start_location": "Stra\u00dfe des 17. Juni (Tiergarten / Gro\u00dfer Stern), Berlin",
+    "finish_location": "Stra\u00dfe des 17. Juni (passing through Brandenburg Gate), Berlin",
+    "course_cutoff_time": "6 hours 15 minutes from crossing the start line",
+    "start_waves": [
+      {
+        "wave": "Handbike",
+        "time": "08:50:00",
+        "description": "Handbike division"
+      },
+      {
+        "wave": "Wheelchair",
+        "time": "08:57:00",
+        "description": "Wheelchair division"
+      },
+      {
+        "wave": "Wave 1",
+        "time": "09:15:00",
+        "start_blocks": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "projected_finish_paces": "A (< 2h45), B (2h45-3h00), C (3h00-3h15), D (3h15-3h30)"
+      },
+      {
+        "wave": "Wave 2",
+        "time": "09:35:00",
+        "start_blocks": [
+          "E"
+        ],
+        "projected_finish_paces": "3h30 - 3h50"
+      },
+      {
+        "wave": "Wave 3",
+        "time": "10:05:00",
+        "start_blocks": [
+          "F"
+        ],
+        "projected_finish_paces": "3h50 - 4h15"
+      },
+      {
+        "wave": "Wave 4",
+        "time": "10:30:00",
+        "start_blocks": [
+          "G",
+          "H"
+        ],
+        "projected_finish_paces": "G (4h15 - 4h45), H (> 4h45)"
+      }
+    ],
+    "course_peculiarities": [
+      "Single flat loop through Berlin (Tiergarten, Mitte, Kreuzberg, Sch\u00f6neberg, Steglitz, Charlottenburg).",
+      "Widely considered the fastest marathon course in history (multiple world records by Kipchoge, Bekele, Gebrselassie).",
+      "Iconic finish running through the Brandenburg Gate with 400m sprint to the line."
+    ]
+  },
+  "tokyo": {
+    "race_name": "Tokyo Marathon",
+    "host_city": "Tokyo, Japan",
+    "annual_date": "First Sunday of March (e.g. March 1, 2026 / March 2, 2025)",
+    "start_location": "Tokyo Metropolitan Government Building (Shinjuku), Tokyo",
+    "finish_location": "Tokyo Station (Gyoko-dori), Chiyoda, Tokyo",
+    "course_cutoff_time": "7 hours from crossing the start line",
+    "start_waves": [
+      {
+        "wave": "Wheelchair",
+        "time": "09:05:00",
+        "description": "Wheelchair marathon"
+      },
+      {
+        "wave": "Marathon Wave 1",
+        "time": "09:10:00",
+        "blocks": [
+          "A",
+          "B",
+          "C",
+          "D",
+          "E"
+        ],
+        "description": "Elite and fast qualifying blocks"
+      },
+      {
+        "wave": "Marathon Wave 2",
+        "time": "09:25:00",
+        "blocks": [
+          "F",
+          "G",
+          "H",
+          "J",
+          "K",
+          "L"
+        ],
+        "description": "Mass participation blocks"
+      }
+    ],
+    "course_peculiarities": [
+      "Starts with a net downhill drop of ~30 meters from Shinjuku through Iidabashi in the first 5 km.",
+      "Multiple out-and-back spurs allowing runners to see elite leaders (Asakusa Kaminarimon, Ginza, Shinagawa).",
+      "Extremely strict checkpoint cut-off times at each 5km timing gate with sweep buses."
+    ]
+  }
+}

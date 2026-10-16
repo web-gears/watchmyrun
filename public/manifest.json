@@ -1,0 +1,16 @@
+{
+  "name": "WatchMy.Run - Phone-Free Marathon Tracker",
+  "short_name": "WatchMy.Run",
+  "description": "Phone-free marathon progress and live spectator tracking for World Marathon Majors with Apple AirTag support",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0284c7",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

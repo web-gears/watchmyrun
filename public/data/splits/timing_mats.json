@@ -1,0 +1,674 @@
+{
+  "new_york": [
+    {
+      "split_name": "Start",
+      "target_distance_m": 0,
+      "actual_distance_m": 0,
+      "actual_distance_km": 0.0,
+      "actual_distance_mi": 0.0,
+      "lat": 40.601905,
+      "lon": -74.059344,
+      "ele": 48.3
+    },
+    {
+      "split_name": "5K",
+      "target_distance_m": 5000,
+      "actual_distance_m": 5000,
+      "actual_distance_km": 5.0,
+      "actual_distance_mi": 3.11,
+      "lat": 40.628786,
+      "lon": -74.025912,
+      "ele": 22.6
+    },
+    {
+      "split_name": "10K",
+      "target_distance_m": 10000,
+      "actual_distance_m": 10000,
+      "actual_distance_km": 10.0,
+      "actual_distance_mi": 6.21,
+      "lat": 40.665478,
+      "lon": -73.992743,
+      "ele": 12.5
+    },
+    {
+      "split_name": "15K",
+      "target_distance_m": 15000,
+      "actual_distance_m": 15000,
+      "actual_distance_km": 15.0,
+      "actual_distance_mi": 9.32,
+      "lat": 40.691425,
+      "lon": -73.955516,
+      "ele": 13.9
+    },
+    {
+      "split_name": "20K",
+      "target_distance_m": 20000,
+      "actual_distance_m": 20000,
+      "actual_distance_km": 20.0,
+      "actual_distance_mi": 12.43,
+      "lat": 40.73021,
+      "lon": -73.954056,
+      "ele": 6.0
+    },
+    {
+      "split_name": "Half",
+      "target_distance_m": 21097.5,
+      "actual_distance_m": 21097.5,
+      "actual_distance_km": 21.1,
+      "actual_distance_mi": 13.11,
+      "lat": 40.738339,
+      "lon": -73.952855,
+      "ele": 4.5
+    },
+    {
+      "split_name": "25K",
+      "target_distance_m": 25000,
+      "actual_distance_m": 25000,
+      "actual_distance_km": 25.0,
+      "actual_distance_mi": 15.53,
+      "lat": 40.757044,
+      "lon": -73.954742,
+      "ele": 13.0
+    },
+    {
+      "split_name": "30K",
+      "target_distance_m": 30000,
+      "actual_distance_m": 30000,
+      "actual_distance_km": 30.0,
+      "actual_distance_mi": 18.64,
+      "lat": 40.791715,
+      "lon": -73.938552,
+      "ele": 3.1
+    },
+    {
+      "split_name": "35K",
+      "target_distance_m": 35000,
+      "actual_distance_m": 35000,
+      "actual_distance_km": 35.0,
+      "actual_distance_mi": 21.75,
+      "lat": 40.80801,
+      "lon": -73.941101,
+      "ele": 5.8
+    },
+    {
+      "split_name": "40K",
+      "target_distance_m": 40000,
+      "actual_distance_m": 40000,
+      "actual_distance_km": 40.0,
+      "actual_distance_mi": 24.85,
+      "lat": 40.773332,
+      "lon": -73.968945,
+      "ele": 19.7
+    },
+    {
+      "split_name": "Finish",
+      "target_distance_m": 42195.0,
+      "actual_distance_m": 42195.0,
+      "actual_distance_km": 42.2,
+      "actual_distance_mi": 26.22,
+      "lat": 40.769966,
+      "lon": -73.9794,
+      "ele": 21.5
+    }
+  ],
+  "boston": [
+    {
+      "split_name": "Start",
+      "target_distance_m": 0,
+      "actual_distance_m": 0,
+      "actual_distance_km": 0.0,
+      "actual_distance_mi": 0.0,
+      "lat": 42.22975,
+      "lon": -71.518245,
+      "ele": 139.0
+    },
+    {
+      "split_name": "5K",
+      "target_distance_m": 5000,
+      "actual_distance_m": 5000,
+      "actual_distance_km": 5.0,
+      "actual_distance_mi": 3.11,
+      "lat": 42.253149,
+      "lon": -71.469618,
+      "ele": 69.6
+    },
+    {
+      "split_name": "10K",
+      "target_distance_m": 10000,
+      "actual_distance_m": 10000,
+      "actual_distance_km": 10.0,
+      "actual_distance_mi": 6.21,
+      "lat": 42.274649,
+      "lon": -71.423926,
+      "ele": 51.2
+    },
+    {
+      "split_name": "15K",
+      "target_distance_m": 15000,
+      "actual_distance_m": 15000,
+      "actual_distance_km": 15.0,
+      "actual_distance_mi": 9.32,
+      "lat": 42.283168,
+      "lon": -71.365031,
+      "ele": 45.7
+    },
+    {
+      "split_name": "20K",
+      "target_distance_m": 20000,
+      "actual_distance_m": 20000,
+      "actual_distance_km": 20.0,
+      "actual_distance_mi": 12.43,
+      "lat": 42.296159,
+      "lon": -71.308767,
+      "ele": 46.2
+    },
+    {
+      "split_name": "Half",
+      "target_distance_m": 21097.5,
+      "actual_distance_m": 21097.5,
+      "actual_distance_km": 21.1,
+      "actual_distance_mi": 13.11,
+      "lat": 42.296247,
+      "lon": -71.295472,
+      "ele": 43.4
+    },
+    {
+      "split_name": "25K",
+      "target_distance_m": 25000,
+      "actual_distance_m": 25000,
+      "actual_distance_km": 25.0,
+      "actual_distance_mi": 15.53,
+      "lat": 42.321069,
+      "lon": -71.263696,
+      "ele": 42.0
+    },
+    {
+      "split_name": "30K",
+      "target_distance_m": 30000,
+      "actual_distance_m": 30000,
+      "actual_distance_km": 30.0,
+      "actual_distance_mi": 18.64,
+      "lat": 42.33752,
+      "lon": -71.218535,
+      "ele": 41.9
+    },
+    {
+      "split_name": "35K",
+      "target_distance_m": 35000,
+      "actual_distance_m": 35000,
+      "actual_distance_km": 35.0,
+      "actual_distance_mi": 21.75,
+      "lat": 42.34001,
+      "lon": -71.161712,
+      "ele": 45.2
+    },
+    {
+      "split_name": "40K",
+      "target_distance_m": 40000,
+      "actual_distance_m": 40000,
+      "actual_distance_km": 40.0,
+      "actual_distance_mi": 24.85,
+      "lat": 42.346483,
+      "lon": -71.105328,
+      "ele": 5.0
+    },
+    {
+      "split_name": "Finish",
+      "target_distance_m": 42195.0,
+      "actual_distance_m": 42195.0,
+      "actual_distance_km": 42.2,
+      "actual_distance_mi": 26.22,
+      "lat": 42.349056,
+      "lon": -71.081196,
+      "ele": 5.1
+    }
+  ],
+  "chicago": [
+    {
+      "split_name": "Start",
+      "target_distance_m": 0,
+      "actual_distance_m": 0,
+      "actual_distance_km": 0.0,
+      "actual_distance_mi": 0.0,
+      "lat": 41.880905,
+      "lon": -87.620677,
+      "ele": 183.7
+    },
+    {
+      "split_name": "5K",
+      "target_distance_m": 5000,
+      "actual_distance_m": 5000,
+      "actual_distance_km": 5.0,
+      "actual_distance_mi": 3.11,
+      "lat": 41.889506,
+      "lon": -87.632501,
+      "ele": 181.3
+    },
+    {
+      "split_name": "10K",
+      "target_distance_m": 10000,
+      "actual_distance_m": 10000,
+      "actual_distance_km": 10.0,
+      "actual_distance_mi": 6.21,
+      "lat": 41.930879,
+      "lon": -87.636794,
+      "ele": 181.9
+    },
+    {
+      "split_name": "15K",
+      "target_distance_m": 15000,
+      "actual_distance_m": 15000,
+      "actual_distance_km": 15.0,
+      "actual_distance_mi": 9.32,
+      "lat": 41.935221,
+      "lon": -87.644243,
+      "ele": 181.8
+    },
+    {
+      "split_name": "20K",
+      "target_distance_m": 20000,
+      "actual_distance_m": 20000,
+      "actual_distance_km": 20.0,
+      "actual_distance_mi": 12.43,
+      "lat": 41.894937,
+      "lon": -87.634147,
+      "ele": 180.7
+    },
+    {
+      "split_name": "Half",
+      "target_distance_m": 21097.5,
+      "actual_distance_m": 21097.5,
+      "actual_distance_km": 21.1,
+      "actual_distance_mi": 13.11,
+      "lat": 41.886411,
+      "lon": -87.636251,
+      "ele": 180.9
+    },
+    {
+      "split_name": "25K",
+      "target_distance_m": 25000,
+      "actual_distance_m": 25000,
+      "actual_distance_km": 25.0,
+      "actual_distance_mi": 15.53,
+      "lat": 41.87877,
+      "lon": -87.674311,
+      "ele": 181.0
+    },
+    {
+      "split_name": "30K",
+      "target_distance_m": 30000,
+      "actual_distance_m": 30000,
+      "actual_distance_km": 30.0,
+      "actual_distance_mi": 18.64,
+      "lat": 41.868339,
+      "lon": -87.661593,
+      "ele": 180.5
+    },
+    {
+      "split_name": "35K",
+      "target_distance_m": 35000,
+      "actual_distance_m": 35000,
+      "actual_distance_km": 35.0,
+      "actual_distance_mi": 21.75,
+      "lat": 41.85135,
+      "lon": -87.631961,
+      "ele": 180.6
+    },
+    {
+      "split_name": "40K",
+      "target_distance_m": 40000,
+      "actual_distance_m": 40000,
+      "actual_distance_km": 40.0,
+      "actual_distance_mi": 24.85,
+      "lat": 41.847359,
+      "lon": -87.623592,
+      "ele": 181.3
+    },
+    {
+      "split_name": "Finish",
+      "target_distance_m": 42195.0,
+      "actual_distance_m": 42195.0,
+      "actual_distance_km": 42.2,
+      "actual_distance_mi": 26.22,
+      "lat": 41.867094,
+      "lon": -87.624143,
+      "ele": 181.6
+    }
+  ],
+  "london": [
+    {
+      "split_name": "Start",
+      "target_distance_m": 0,
+      "actual_distance_m": 0,
+      "actual_distance_km": 0.0,
+      "actual_distance_mi": 0.0,
+      "lat": 51.47309,
+      "lon": 0.01158,
+      "ele": 41.0
+    },
+    {
+      "split_name": "5K",
+      "target_distance_m": 5000,
+      "actual_distance_m": 5000,
+      "actual_distance_km": 5.0,
+      "actual_distance_mi": 3.11,
+      "lat": 51.492418,
+      "lon": 0.061016,
+      "ele": 16.7
+    },
+    {
+      "split_name": "10K",
+      "target_distance_m": 10000,
+      "actual_distance_m": 10000,
+      "actual_distance_km": 10.0,
+      "actual_distance_mi": 6.21,
+      "lat": 51.482304,
+      "lon": -0.004739,
+      "ele": 6.8
+    },
+    {
+      "split_name": "15K",
+      "target_distance_m": 15000,
+      "actual_distance_m": 15000,
+      "actual_distance_km": 15.0,
+      "actual_distance_mi": 9.32,
+      "lat": 51.497357,
+      "lon": -0.041334,
+      "ele": 5.6
+    },
+    {
+      "split_name": "20K",
+      "target_distance_m": 20000,
+      "actual_distance_m": 20000,
+      "actual_distance_km": 20.0,
+      "actual_distance_mi": 12.43,
+      "lat": 51.505459,
+      "lon": -0.075401,
+      "ele": 11.1
+    },
+    {
+      "split_name": "Half",
+      "target_distance_m": 21097.5,
+      "actual_distance_m": 21097.5,
+      "actual_distance_km": 21.1,
+      "actual_distance_mi": 13.11,
+      "lat": 51.509282,
+      "lon": -0.064448,
+      "ele": 8.7
+    },
+    {
+      "split_name": "25K",
+      "target_distance_m": 25000,
+      "actual_distance_m": 25000,
+      "actual_distance_km": 25.0,
+      "actual_distance_mi": 15.53,
+      "lat": 51.499159,
+      "lon": -0.025964,
+      "ele": 3.2
+    },
+    {
+      "split_name": "30K",
+      "target_distance_m": 30000,
+      "actual_distance_m": 30000,
+      "actual_distance_km": 30.0,
+      "actual_distance_mi": 18.64,
+      "lat": 51.504402,
+      "lon": -0.017668,
+      "ele": 9.8
+    },
+    {
+      "split_name": "35K",
+      "target_distance_m": 35000,
+      "actual_distance_m": 35000,
+      "actual_distance_km": 35.0,
+      "actual_distance_mi": 21.75,
+      "lat": 51.509774,
+      "lon": -0.05055,
+      "ele": 10.2
+    },
+    {
+      "split_name": "40K",
+      "target_distance_m": 40000,
+      "actual_distance_m": 40000,
+      "actual_distance_km": 40.0,
+      "actual_distance_mi": 24.85,
+      "lat": 51.50903,
+      "lon": -0.119988,
+      "ele": 5.2
+    },
+    {
+      "split_name": "Finish",
+      "target_distance_m": 42195.0,
+      "actual_distance_m": 42195.0,
+      "actual_distance_km": 42.2,
+      "actual_distance_mi": 26.22,
+      "lat": 51.502114,
+      "lon": -0.139693,
+      "ele": 6.0
+    }
+  ],
+  "berlin": [
+    {
+      "split_name": "Start",
+      "target_distance_m": 0,
+      "actual_distance_m": 0,
+      "actual_distance_km": 0.0,
+      "actual_distance_mi": 0.0,
+      "lat": 52.51521,
+      "lon": 13.360292,
+      "ele": 34.0
+    },
+    {
+      "split_name": "5K",
+      "target_distance_m": 5000,
+      "actual_distance_m": 5000,
+      "actual_distance_km": 5.0,
+      "actual_distance_mi": 3.11,
+      "lat": 52.525161,
+      "lon": 13.34474,
+      "ele": 35.6
+    },
+    {
+      "split_name": "10K",
+      "target_distance_m": 10000,
+      "actual_distance_m": 10000,
+      "actual_distance_km": 10.0,
+      "actual_distance_mi": 6.21,
+      "lat": 52.528726,
+      "lon": 13.409345,
+      "ele": 39.5
+    },
+    {
+      "split_name": "15K",
+      "target_distance_m": 15000,
+      "actual_distance_m": 15000,
+      "actual_distance_km": 15.0,
+      "actual_distance_mi": 9.32,
+      "lat": 52.500982,
+      "lon": 13.411866,
+      "ele": 36.0
+    },
+    {
+      "split_name": "20K",
+      "target_distance_m": 20000,
+      "actual_distance_m": 20000,
+      "actual_distance_km": 20.0,
+      "actual_distance_mi": 12.43,
+      "lat": 52.493298,
+      "lon": 13.381826,
+      "ele": 35.7
+    },
+    {
+      "split_name": "Half",
+      "target_distance_m": 21097.5,
+      "actual_distance_m": 21097.5,
+      "actual_distance_km": 21.1,
+      "actual_distance_mi": 13.11,
+      "lat": 52.493504,
+      "lon": 13.366832,
+      "ele": 35.6
+    },
+    {
+      "split_name": "25K",
+      "target_distance_m": 25000,
+      "actual_distance_m": 25000,
+      "actual_distance_km": 25.0,
+      "actual_distance_mi": 15.53,
+      "lat": 52.472877,
+      "lon": 13.336771,
+      "ele": 42.9
+    },
+    {
+      "split_name": "30K",
+      "target_distance_m": 30000,
+      "actual_distance_m": 30000,
+      "actual_distance_km": 30.0,
+      "actual_distance_mi": 18.64,
+      "lat": 52.478462,
+      "lon": 13.28358,
+      "ele": 47.8
+    },
+    {
+      "split_name": "35K",
+      "target_distance_m": 35000,
+      "actual_distance_m": 35000,
+      "actual_distance_km": 35.0,
+      "actual_distance_mi": 21.75,
+      "lat": 52.503443,
+      "lon": 13.329938,
+      "ele": 35.6
+    },
+    {
+      "split_name": "40K",
+      "target_distance_m": 40000,
+      "actual_distance_m": 40000,
+      "actual_distance_km": 40.0,
+      "actual_distance_mi": 24.85,
+      "lat": 52.510311,
+      "lon": 13.389179,
+      "ele": 35.6
+    },
+    {
+      "split_name": "Finish",
+      "target_distance_m": 42195.0,
+      "actual_distance_m": 42195.0,
+      "actual_distance_km": 42.2,
+      "actual_distance_mi": 26.22,
+      "lat": 52.516397,
+      "lon": 13.381293,
+      "ele": 35.3
+    }
+  ],
+  "tokyo": [
+    {
+      "split_name": "Start",
+      "target_distance_m": 0,
+      "actual_distance_m": 0,
+      "actual_distance_km": 0.0,
+      "actual_distance_mi": 0.0,
+      "lat": 35.689939,
+      "lon": 139.692341,
+      "ele": 55.0
+    },
+    {
+      "split_name": "5K",
+      "target_distance_m": 5000,
+      "actual_distance_m": 5000,
+      "actual_distance_km": 5.0,
+      "actual_distance_mi": 3.11,
+      "lat": 35.692764,
+      "lon": 139.735944,
+      "ele": 21.9
+    },
+    {
+      "split_name": "10K",
+      "target_distance_m": 10000,
+      "actual_distance_m": 10000,
+      "actual_distance_km": 10.0,
+      "actual_distance_mi": 6.21,
+      "lat": 35.702538,
+      "lon": 139.771634,
+      "ele": 23.5
+    },
+    {
+      "split_name": "15K",
+      "target_distance_m": 15000,
+      "actual_distance_m": 15000,
+      "actual_distance_km": 15.0,
+      "actual_distance_mi": 9.32,
+      "lat": 35.685281,
+      "lon": 139.787276,
+      "ele": 12.4
+    },
+    {
+      "split_name": "20K",
+      "target_distance_m": 20000,
+      "actual_distance_m": 20000,
+      "actual_distance_km": 20.0,
+      "actual_distance_mi": 12.43,
+      "lat": 35.700954,
+      "lon": 139.793533,
+      "ele": 4.1
+    },
+    {
+      "split_name": "Half",
+      "target_distance_m": 21097.5,
+      "actual_distance_m": 21097.5,
+      "actual_distance_km": 21.1,
+      "actual_distance_mi": 13.11,
+      "lat": 35.693403,
+      "lon": 139.797772,
+      "ele": 9.2
+    },
+    {
+      "split_name": "25K",
+      "target_distance_m": 25000,
+      "actual_distance_m": 25000,
+      "actual_distance_km": 25.0,
+      "actual_distance_mi": 15.53,
+      "lat": 35.676878,
+      "lon": 139.796878,
+      "ele": 7.0
+    },
+    {
+      "split_name": "30K",
+      "target_distance_m": 30000,
+      "actual_distance_m": 30000,
+      "actual_distance_km": 30.0,
+      "actual_distance_mi": 18.64,
+      "lat": 35.688059,
+      "lon": 139.786397,
+      "ele": 15.4
+    },
+    {
+      "split_name": "35K",
+      "target_distance_m": 35000,
+      "actual_distance_m": 35000,
+      "actual_distance_km": 35.0,
+      "actual_distance_mi": 21.75,
+      "lat": 35.667177,
+      "lon": 139.754427,
+      "ele": 23.3
+    },
+    {
+      "split_name": "40K",
+      "target_distance_m": 40000,
+      "actual_distance_m": 40000,
+      "actual_distance_km": 40.0,
+      "actual_distance_mi": 24.85,
+      "lat": 35.665909,
+      "lon": 139.753704,
+      "ele": 21.0
+    },
+    {
+      "split_name": "Finish",
+      "target_distance_m": 42195.0,
+      "actual_distance_m": 42195.0,
+      "actual_distance_km": 42.2,
+      "actual_distance_mi": 26.22,
+      "lat": 35.681978,
+      "lon": 139.763126,
+      "ele": 28.9
+    }
+  ]
+}

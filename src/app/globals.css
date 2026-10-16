@@ -1,0 +1,198 @@
+@import '@mantine/core/styles.css';
+@import '@mantine/dates/styles.css';
+@import '@mantine/charts/styles.css';
+@import 'leaflet/dist/leaflet.css';
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+#__next,
+main {
+  height: 100%;
+  width: 100%;
+}
+
+/* Custom leaflet map adjustments */
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  background: var(--mantine-color-body) !important;
+  font-family: inherit;
+}
+
+/* Runner pulsing marker */
+.runner-marker-pulse {
+  position: relative;
+  width: 24px;
+  height: 24px;
+}
+
+.runner-marker-core {
+  width: 18px;
+  height: 18px;
+  background-color: #0284c7;
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  box-shadow: 0 0 10px rgba(2, 132, 199, 0.8);
+  z-index: 10;
+}
+
+[data-mantine-color-scheme="dark"] .runner-marker-core {
+  background-color: #38bdf8;
+  border-color: #0f172a;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.9);
+}
+
+.runner-marker-wave {
+  width: 24px;
+  height: 24px;
+  background: rgba(2, 132, 199, 0.4);
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  animation: pulse-ring 2s infinite ease-out;
+}
+
+[data-mantine-color-scheme="dark"] .runner-marker-wave {
+  background: rgba(56, 189, 248, 0.5);
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+/* Premium Dropped Tracking Fix Pin Marker */
+.custom-pin-leaflet-icon {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  overflow: visible !important;
+  cursor: grab !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-user-drag: none !important;
+  touch-action: none !important;
+}
+
+.custom-pin-leaflet-icon:active,
+.leaflet-dragging .custom-pin-leaflet-icon,
+.custom-pin-leaflet-icon.leaflet-drag-target {
+  cursor: grabbing !important;
+}
+
+.custom-pin-leaflet-icon .tracking-pin-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 60px;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.35));
+  pointer-events: none !important; /* Prevents SVG elements from capturing or hijacking drag */
+}
+
+.tracking-pin-pill {
+  background: rgba(15, 23, 42, 0.92);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 12px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  margin-bottom: -3px;
+  z-index: 2;
+  letter-spacing: 0.2px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+[data-mantine-color-scheme="dark"] .tracking-pin-pill {
+  background: rgba(30, 41, 59, 0.95);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+}
+
+.tracking-pin-svg,
+.spectator-pin-svg {
+  display: block;
+}
+
+.pin-ground-shadow {
+  width: 14px;
+  height: 5px;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0) 70%);
+  border-radius: 50%;
+  margin-top: -2px;
+}
+
+/* Premium Spectator Cheer Station Waypoint */
+.custom-spectator-leaflet-icon {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  overflow: visible !important;
+  cursor: pointer !important;
+}
+
+.custom-spectator-leaflet-icon .spectator-waypoint-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 60px;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.35));
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.custom-spectator-leaflet-icon:hover .spectator-waypoint-wrapper {
+  transform: scale(1.15) translateY(-2px);
+}
+
+.spectator-waypoint-pill {
+  background: rgba(217, 119, 6, 0.95);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 12px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  margin-bottom: -3px;
+  z-index: 2;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+/* Glassmorphism utility */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+[data-mantine-color-scheme="dark"] .glass-panel {
+  background: rgba(15, 23, 42, 0.88);
+}
