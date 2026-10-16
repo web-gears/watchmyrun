@@ -18,6 +18,8 @@ import {
   IconMapPin,
   IconChevronDown,
   IconInfoCircle,
+  IconCoffee,
+  IconCloud,
 } from '@tabler/icons-react';
 import { useState } from 'react';
 import { MarathonInfo } from '@/lib/data/marathonRegistry';
@@ -245,6 +247,48 @@ export function AppHeader({
                 </Group>
               </Popover.Dropdown>
             </Popover>
+
+            {/* Running Weather Forecast (Run-Weather.com) */}
+            <Tooltip label="Race weather forecast (Run-Weather.com)" position="bottom-end" withArrow>
+              <ActionIcon
+                component="a"
+                href="https://run-weather.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                size="lg"
+                variant="default"
+                radius="md"
+                aria-label="Running weather forecast on Run-Weather.com"
+                title="Race weather forecast (Run-Weather.com)"
+                visibleFrom="xs"
+              >
+                <IconCloud size={18} stroke={1.8} color="#0284c7" />
+              </ActionIcon>
+            </Tooltip>
+
+            {/* Support on Ko-fi */}
+            <Tooltip
+              label="Support the project: Help keep WatchMy.Run free & cover map/server costs on Ko-fi"
+              position="bottom-end"
+              withArrow
+              multiline
+              w={240}
+            >
+              <ActionIcon
+                component="a"
+                href="https://ko-fi.com/lavenderaf"
+                target="_blank"
+                rel="noopener noreferrer"
+                size="lg"
+                variant="default"
+                radius="md"
+                aria-label="Support the project on Ko-fi"
+                title="Support the project: Help keep WatchMy.Run free & cover map/server costs on Ko-fi"
+                visibleFrom="xs"
+              >
+                <IconCoffee size={18} stroke={1.8} color="#f43f5e" />
+              </ActionIcon>
+            </Tooltip>
 
             <ThemeToggle />
           </Group>

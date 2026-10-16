@@ -618,7 +618,8 @@ export default function MarathonTrackerPage() {
             position: 'absolute',
             top: 16,
             left: 16,
-            width: 370,
+            width: 380,
+            maxWidth: 'calc(100vw - 32px)',
             zIndex: 1000,
             pointerEvents: 'none',
           }}
@@ -642,7 +643,8 @@ export default function MarathonTrackerPage() {
               type="scroll"
               scrollHideDelay={600}
               scrollbars="y"
-              viewportProps={{ style: { overscrollBehavior: 'contain' } }}
+              scrollbarSize={6}
+              viewportProps={{ style: { overscrollBehavior: 'contain', overflowX: 'hidden', width: '100%', maxWidth: '100%', display: 'block' } }}
             >
               <RaceConfigDrawer
                 selectedMarathon={selectedMarathon}
@@ -916,7 +918,8 @@ export default function MarathonTrackerPage() {
           type="scroll"
           scrollHideDelay={600}
           scrollbars="y"
-          viewportProps={{ style: { overscrollBehavior: 'contain' } }}
+          scrollbarSize={6}
+          viewportProps={{ style: { overscrollBehavior: 'contain', overflowX: 'hidden', width: '100%', maxWidth: '100%', display: 'block' } }}
         >
           <RaceConfigDrawer
             selectedMarathon={selectedMarathon}

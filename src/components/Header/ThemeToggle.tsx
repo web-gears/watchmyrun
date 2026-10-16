@@ -7,22 +7,17 @@ export function ThemeToggle() {
   const { setColorScheme } = useMantineColorScheme();
   const computedColorScheme = useComputedColorScheme('light', { getInitialValueInEffect: true });
 
-  const isDark = computedColorScheme === 'dark';
-
   return (
     <ActionIcon
-      onClick={() => setColorScheme(isDark ? 'light' : 'dark')}
+      onClick={() => setColorScheme(computedColorScheme === 'dark' ? 'light' : 'dark')}
       variant="default"
       size="lg"
       radius="md"
       aria-label="Toggle color scheme"
-      title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+      title="Toggle color scheme"
     >
-      {isDark ? (
-        <IconSun size={18} stroke={1.8} color="#f59e0b" />
-      ) : (
-        <IconMoon size={18} stroke={1.8} color="#6366f1" />
-      )}
+      <IconSun className="theme-icon-sun" size={18} stroke={1.8} color="#f59e0b" />
+      <IconMoon className="theme-icon-moon" size={18} stroke={1.8} color="#6366f1" />
     </ActionIcon>
   );
 }

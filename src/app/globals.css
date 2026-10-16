@@ -196,3 +196,33 @@ main {
 [data-mantine-color-scheme="dark"] .glass-panel {
   background: rgba(15, 23, 42, 0.88);
 }
+
+/* Mantine ScrollArea containment fix: prevent table wrapper from expanding beyond parent width */
+.mantine-ScrollArea-viewport > div,
+.mantine-ScrollArea-content {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Theme toggle icons: CSS-controlled to eliminate SSR hydration mismatch and flicker */
+.theme-icon-sun {
+  display: none !important;
+}
+.theme-icon-moon {
+  display: block !important;
+}
+
+[data-mantine-color-scheme="dark"] .theme-icon-sun {
+  display: block !important;
+}
+[data-mantine-color-scheme="dark"] .theme-icon-moon {
+  display: none !important;
+}
+
+/* Ensure Mantine Tooltips always render above map, drawer, and header overlays */
+.mantine-Tooltip-tooltip {
+  z-index: 10000 !important;
+}
+

@@ -54,6 +54,11 @@ const theme = createTheme({
         zIndex: 10000,
       },
     },
+    Tooltip: {
+      defaultProps: {
+        zIndex: 10000,
+      },
+    },
   },
 });
 

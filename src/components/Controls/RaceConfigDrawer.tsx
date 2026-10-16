@@ -16,6 +16,7 @@ import {
   Tooltip,
   Box,
   Checkbox,
+  Anchor,
 } from '@mantine/core';
 import {
   IconClock,
@@ -27,6 +28,8 @@ import {
   IconPlus,
   IconCheck,
   IconTrophy,
+  IconCoffee,
+  IconCloud,
 } from '@tabler/icons-react';
 import {
   RaceDistanceId,
@@ -41,7 +44,7 @@ import {
   CheerSpotPreset,
   SpectatorMeetingWindow,
 } from '@/lib/forecasting/types';
-import { MARATHON_LIST, MarathonInfo } from '@/lib/data/marathonRegistry';
+import { MarathonInfo } from '@/lib/data/marathonRegistry';
 import { formatPace } from '@/lib/forecasting/pacingModels';
 
 interface RaceConfigDrawerProps {
@@ -146,7 +149,7 @@ export function RaceConfigDrawer({
   }));
 
   return (
-    <Stack gap="md" p="md">
+    <Stack gap="md" p="sm" style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
       {/* 1. World Marathon Major Selection */}
       <div>
         <Card
@@ -156,61 +159,36 @@ export function RaceConfigDrawer({
           style={{
             background: 'var(--mantine-color-default-hover)',
             border: '1px solid var(--mantine-color-default-border)',
+            overflow: 'hidden',
           }}
         >
           {/* Active Race Header */}
-          <Group gap="xs" wrap="nowrap" mb={8} align="center">
-            <Text size="28px" style={{ lineHeight: 1, flexShrink: 0 }}>
-              {marathonInfo.flag}
-            </Text>
-            <Box style={{ flex: 1, minWidth: 0 }}>
-              <Text fw={700} size="sm" style={{ lineHeight: 1.2 }}>
-                {marathonInfo.name}
+          <Group justify="space-between" align="center" wrap="nowrap" gap="xs">
+            <Group gap="xs" wrap="nowrap" align="center" style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+              <Text size="26px" style={{ lineHeight: 1, flexShrink: 0 }}>
+                {marathonInfo.flag}
               </Text>
-              <Text size="11px" c="dimmed" mt={2}>
-                {marathonInfo.city} • {marathonInfo.annualDate}
-              </Text>
-            </Box>
-          </Group>
+              <Box style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                <Text fw={700} size="sm" style={{ lineHeight: 1.2 }} truncate>
+                  {marathonInfo.name}
+                </Text>
+                <Text size="11px" c="dimmed" mt={2} truncate>
+                  {marathonInfo.city} • {marathonInfo.annualDate}
+                </Text>
+              </Box>
+            </Group>
 
-          <Divider my={6} />
-
-          {/* Quick-switch chips for all 6 World Marathon Majors */}
-          <Group justify="space-between" align="center" mb={4}>
-            <Text size="11px" fw={600} c="dimmed">
-              World Marathon Majors:
-            </Text>
             <Button
-              size="compact-xs"
+              size="xs"
               variant="subtle"
               color="cyan"
-              radius="sm"
-              leftSection={<IconTrophy size={13} />}
+              radius="md"
+              style={{ flexShrink: 0 }}
+              leftSection={<IconTrophy size={14} />}
               onClick={onOpenRaceModal}
             >
-              Browse All
+              Change
             </Button>
-          </Group>
-          <Group gap={6} wrap="wrap">
-            {MARATHON_LIST.map((m) => {
-              const isCurrent = m.id === selectedMarathon;
-              return (
-                <Button
-                  key={m.id}
-                  size="compact-xs"
-                  variant={isCurrent ? 'filled' : 'default'}
-                  color="cyan"
-                  radius="sm"
-                  leftSection={<Text size="xs">{m.flag}</Text>}
-                  onClick={() => onSelectMarathon(m.id)}
-                  style={{
-                    fontWeight: isCurrent ? 700 : 500,
-                  }}
-                >
-                  {m.shortName}
-                </Button>
-              );
-            })}
           </Group>
 
           {/* If New York is selected, display sub-distance options */}
@@ -245,13 +223,27 @@ export function RaceConfigDrawer({
 
       {/* 2. Start Time & Wave Selection */}
       <Stack gap="xs">
-        <Group justify="space-between">
+        <Group justify="space-between" align="center">
           <Text size="sm" fw={600}>
             Race Start Time
           </Text>
-          <Badge size="xs" variant="light" color="blue">
-            Wave Default
-          </Badge>
+          <Group gap="xs" align="center">
+            <Anchor
+              href="https://run-weather.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              size="xs"
+              c="cyan"
+              title="Check outside running conditions & weather scores at Run-Weather.com"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 3, textDecoration: 'none', fontWeight: 500 }}
+            >
+              <IconCloud size={14} stroke={1.8} />
+              Race Weather
+            </Anchor>
+            <Badge size="xs" variant="light" color="blue">
+              Wave Default
+            </Badge>
+          </Group>
         </Group>
 
         <Select
@@ -293,11 +285,11 @@ export function RaceConfigDrawer({
           />
         </Group>
 
-        <Group grow>
+        <Group grow gap="xs">
           <TextInput
             size="sm"
             radius="md"
-            label={`Target Pace (${pacingUnit === 'km' ? 'min/km' : 'min/mi'})`}
+            label="Target Pace"
             leftSection={<IconRun size={16} />}
             value={paceStr}
             onChange={(e) => onPaceChange(e.currentTarget.value)}
@@ -674,12 +666,12 @@ export function RaceConfigDrawer({
               />
             </Group>
 
-            <Group gap="xs" align="flex-end">
+            <Group gap="xs" align="flex-end" wrap="nowrap" style={{ width: '100%' }}>
               <TextInput
                 size="xs"
                 radius="md"
-                style={{ flex: 1 }}
-                placeholder="Custom spot name (e.g. Near church)"
+                style={{ flex: 1, minWidth: 0 }}
+                placeholder="e.g. Near church"
                 label="Station Label (Optional)"
                 value={customName}
                 onChange={(e) => setCustomName(e.currentTarget.value)}
@@ -689,6 +681,7 @@ export function RaceConfigDrawer({
                 color="amber"
                 variant="light"
                 radius="md"
+                style={{ flexShrink: 0 }}
                 leftSection={<IconPlus size={14} />}
                 onClick={handleAddCustomSpot}
                 disabled={!customDistStr || isNaN(parseFloat(customDistStr))}
@@ -712,6 +705,53 @@ export function RaceConfigDrawer({
           </Stack>
         </Card>
       </Stack>
+
+      {/* Footer attribution & support */}
+      <Box pt="xs" pb="xs">
+        <Divider mb="xs" />
+        <Group justify="center" gap="xs" wrap="nowrap">
+          <Tooltip label="Check outside running conditions & weather scores at Run-Weather.com" position="top" withArrow>
+            <Anchor
+              href="https://run-weather.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              size="11px"
+              c="dimmed"
+              title="Check outside running conditions & weather scores at Run-Weather.com"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 3, textDecoration: 'none' }}
+            >
+              <IconCloud size={13} stroke={1.8} />
+              Run-Weather.com
+            </Anchor>
+          </Tooltip>
+          <Text size="11px" c="dimmed">
+            •
+          </Text>
+          <Tooltip
+            label="Support the project: Help keep WatchMy.Run 100% free & cover map hosting costs on Ko-fi"
+            position="top"
+            withArrow
+            multiline
+            w={230}
+          >
+            <Anchor
+              href="https://ko-fi.com/lavenderaf"
+              target="_blank"
+              rel="noopener noreferrer"
+              size="11px"
+              c="pink"
+              title="Support the project: Help keep WatchMy.Run 100% free & cover map hosting costs on Ko-fi"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, textDecoration: 'none' }}
+            >
+              <IconCoffee size={13} stroke={2} />
+              Support on Ko-fi
+            </Anchor>
+          </Tooltip>
+        </Group>
+        <Text size="10px" c="dimmed" ta="center" mt={6} style={{ opacity: 0.8 }}>
+          © {new Date().getFullYear()} WatchMy.Run • Developed by Volodymyr Hartsev
+        </Text>
+      </Box>
     </Stack>
   );
 }

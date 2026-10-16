@@ -112,7 +112,7 @@ export function MarathonMap({
 
     const tileLayer = L.tileLayer(tileUrl, {
       attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a> &bull; &copy; Volodymyr Hartsev',
       subdomains: 'abcd',
       maxZoom: 19,
     }).addTo(mapInstance);
