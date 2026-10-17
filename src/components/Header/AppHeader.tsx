@@ -49,7 +49,7 @@ export function AppHeader({
     <>
       <Box
         component="header"
-        px={{ base: 'xs', sm: 'md' }}
+        px={{ base: 8, sm: 'md' }}
         py="xs"
         className="glass-panel"
         style={{
@@ -60,7 +60,7 @@ export function AppHeader({
       >
         <Group justify="space-between" wrap="nowrap">
           {/* Left: Brand & Mobile Burger */}
-          <Group gap="xs" wrap="nowrap" style={{ flexShrink: 0 }}>
+          <Group gap={6} wrap="nowrap" style={{ flexShrink: 0 }}>
             <Burger
               opened={isMobileDrawerOpen}
               onClick={onOpenMobileDrawer}
@@ -69,7 +69,7 @@ export function AppHeader({
               aria-label="Toggle race controls drawer"
               style={{ minWidth: 44, minHeight: 44 }}
             />
-            <Group gap="xs" wrap="nowrap">
+            <Group gap={6} wrap="nowrap">
               <Box
                 style={{
                   width: 32,
@@ -115,27 +115,44 @@ export function AppHeader({
           </Group>
 
           {/* Center: Interactive Race Selector Pill */}
-          <Group gap="xs" wrap="nowrap" style={{ flexShrink: 1, minWidth: 0 }}>
+          <Group gap="xs" wrap="nowrap" justify="center" style={{ flexShrink: 1, minWidth: 0 }}>
             <Button
               variant="light"
               color="cyan"
               size="sm"
               radius="xl"
-              px={{ base: 8, sm: 'sm' }}
-              leftSection={<Text size="md">{marathonInfo.flag}</Text>}
-              rightSection={<IconChevronDown size={14} />}
+              h={{ base: 32, sm: 36 }}
+              px={{ base: 6, xs: 8, sm: 'sm' }}
+              fz={{ base: 12, xs: 13, sm: 14 }}
+              leftSection={
+                <Text size="sm" style={{ lineHeight: 1 }}>
+                  {marathonInfo.flag}
+                </Text>
+              }
+              rightSection={<IconChevronDown size={13} stroke={2.2} />}
               onClick={onOpenRaceModal}
+              aria-label={`Select race: ${marathonInfo.name}`}
+              title={`Current race: ${marathonInfo.name}`}
+              styles={{
+                section: {
+                  marginInlineEnd: 4,
+                  marginInlineStart: 4,
+                },
+              }}
               style={{
                 fontWeight: 600,
                 boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                 flexShrink: 0,
               }}
             >
+              <Box hiddenFrom="xs" component="span" fw={700}>
+                {marathonInfo.code}
+              </Box>
+              <Box visibleFrom="xs" hiddenFrom="sm" component="span">
+                {marathonInfo.shortName}
+              </Box>
               <Box visibleFrom="sm" component="span">
                 {marathonInfo.name}
-              </Box>
-              <Box hiddenFrom="sm" component="span">
-                {marathonInfo.shortName}
               </Box>
             </Button>
 

@@ -12,6 +12,7 @@ export interface MarathonInfo {
   id: MarathonId;
   name: string;
   shortName: string;
+  code: string;
   flag: string;
   city: string;
   country: string;
@@ -35,6 +36,7 @@ export const MARATHON_REGISTRY: Record<MarathonId, MarathonInfo> = {
     id: 'new_york',
     name: 'TCS New York City Marathon',
     shortName: 'New York',
+    code: 'NYC',
     flag: '🇺🇸',
     city: 'New York City, NY',
     country: 'USA',
@@ -74,6 +76,7 @@ export const MARATHON_REGISTRY: Record<MarathonId, MarathonInfo> = {
     id: 'boston',
     name: 'Boston Marathon (B.A.A.)',
     shortName: 'Boston',
+    code: 'BOS',
     flag: '🇺🇸',
     city: 'Boston, MA',
     country: 'USA',
@@ -114,6 +117,7 @@ export const MARATHON_REGISTRY: Record<MarathonId, MarathonInfo> = {
     id: 'chicago',
     name: 'Bank of America Chicago Marathon',
     shortName: 'Chicago',
+    code: 'CHI',
     flag: '🇺🇸',
     city: 'Chicago, IL',
     country: 'USA',
@@ -150,6 +154,7 @@ export const MARATHON_REGISTRY: Record<MarathonId, MarathonInfo> = {
     id: 'london',
     name: 'TCS London Marathon',
     shortName: 'London',
+    code: 'LDN',
     flag: '🇬🇧',
     city: 'London',
     country: 'United Kingdom',
@@ -188,6 +193,7 @@ export const MARATHON_REGISTRY: Record<MarathonId, MarathonInfo> = {
     id: 'berlin',
     name: 'BMW Berlin-Marathon',
     shortName: 'Berlin',
+    code: 'BER',
     flag: '🇩🇪',
     city: 'Berlin',
     country: 'Germany',
@@ -226,6 +232,7 @@ export const MARATHON_REGISTRY: Record<MarathonId, MarathonInfo> = {
     id: 'tokyo',
     name: 'Tokyo Marathon',
     shortName: 'Tokyo',
+    code: 'TYO',
     flag: '🇯🇵',
     city: 'Tokyo',
     country: 'Japan',
