@@ -22,6 +22,7 @@ import { PinDropModal } from '@/components/Controls/PinDropModal';
 import { EditPinModal } from '@/components/Controls/EditPinModal';
 import { RunnerStatusHUD } from '@/components/HUD/RunnerStatusHUD';
 import { SpectatorWindowCard } from '@/components/HUD/SpectatorWindowCard';
+import { AwaitingRunnerCard } from '@/components/HUD/AwaitingRunnerCard';
 import { UndoToast } from '@/components/Common/UndoToast';
 import { SwitchRaceConfirmModal } from '@/components/Controls/SwitchRaceConfirmModal';
 import {
@@ -648,7 +649,8 @@ export default function MarathonTrackerPage() {
     <Box
       style={{
         width: '100vw',
-        height: '100vh',
+        height: '100dvh',
+        maxHeight: '100dvh',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
@@ -819,7 +821,6 @@ export default function MarathonTrackerPage() {
           className={`bottom-hud-container ${!desktopDrawerCollapsed ? 'bottom-hud-desktop-offset' : ''}`}
           style={{
             position: 'absolute',
-            bottom: 16,
             zIndex: 1000,
             width: 'calc(100% - 32px)',
             maxWidth: 580,
@@ -846,157 +847,16 @@ export default function MarathonTrackerPage() {
               }}
             />
           ) : (
-            <Card
-              withBorder
-              shadow="xl"
-              radius="lg"
-              p="sm"
-              className="glass-panel"
-              style={{
-                border: '1px solid var(--mantine-color-default-border)',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-              }}
-            >
-              <Group justify="space-between" align="center" wrap="nowrap" mb={6}>
-                <Group gap="xs" wrap="nowrap">
-                  <Box
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 6,
-                      background: '#0284c7',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'white',
-                    }}
-                  >
-                    <IconRun size={18} stroke={2.2} />
-                  </Box>
-                  <div>
-                    <Text fw={700} size="sm" style={{ lineHeight: 1.1 }}>
-                      {marathonInfo.name}
-                    </Text>
-                    <Text size="11px" c="dimmed" style={{ lineHeight: 1.1 }}>
-                      {marathonInfo.city} • {selectedMarathon === 'new_york' ? distanceOption.label : '42.2 km Course Loaded'}
-                    </Text>
-                  </div>
-                </Group>
-                <Group gap="xs" wrap="nowrap">
-                  <Button
-                    size="xs"
-                    variant="subtle"
-                    color="cyan"
-                    leftSection={<IconTrophy size={13} />}
-                    onClick={() => setRaceModalOpen(true)}
-                  >
-                    Change Race
-                  </Button>
-                  <Badge size="sm" variant="light" color="cyan">
-                    Awaiting Runner Data
-                  </Badge>
-                </Group>
-              </Group>
-
-              {/* Phone-Free Explainer Callout */}
-              <Box
-                p="xs"
-                mb="xs"
-                style={{
-                  background: 'rgba(2, 132, 199, 0.06)',
-                  borderRadius: 8,
-                  border: '1px solid rgba(2, 132, 199, 0.18)',
-                }}
-              >
-                <Text size="xs" fw={700} c="cyan.8">
-                  Phone-free tracking with AirTag or tracking pins
-                </Text>
-                <Text size="11px" c="dimmed" mt={2}>
-                  Track your runner using AirTag updates or course checkpoints. Drop tracking pins to update live pace and cheer station arrival windows.
-                </Text>
-              </Box>
-
-              <Text size="xs" c="dimmed" mb="xs">
-                Select a goal time below or set custom pace in the controls panel:
-              </Text>
-
-              <Group gap="xs" wrap="wrap">
-                {selectedDistance === 'marathon' && (
-                  <>
-                    <Button size="xs" variant="light" color="cyan" onClick={() => handleFinishTimeChange('03:15:00')}>
-                      3h 15m
-                    </Button>
-                    <Button size="xs" variant="light" color="cyan" onClick={() => handleFinishTimeChange('03:30:00')}>
-                      3h 30m
-                    </Button>
-                    <Button size="xs" variant="light" color="cyan" onClick={() => handleFinishTimeChange('03:45:00')}>
-                      3h 45m
-                    </Button>
-                    <Button size="xs" variant="light" color="cyan" onClick={() => handleFinishTimeChange('04:00:00')}>
-                      4h 00m
-                    </Button>
-                  </>
-                )}
-                {selectedMarathon === 'new_york' && selectedDistance === 'half' && (
-                  <>
-                    <Button size="xs" variant="light" color="cyan" onClick={() => handleFinishTimeChange('01:30:00')}>
-                      1h 30m Goal
-                    </Button>
-                    <Button size="xs" variant="light" color="cyan" onClick={() => handleFinishTimeChange('01:45:00')}>
-                      1h 45m Goal
-                    </Button>
-                    <Button size="xs" variant="light" color="cyan" onClick={() => handleFinishTimeChange('02:00:00')}>
-                      2h 00m Goal
-                    </Button>
-                  </>
-                )}
-                {selectedMarathon === 'new_york' && selectedDistance === '10k' && (
-                  <>
-                    <Button size="xs" variant="light" color="cyan" onClick={() => handleFinishTimeChange('00:45:00')}>
-                      45m Goal
-                    </Button>
-                    <Button size="xs" variant="light" color="cyan" onClick={() => handleFinishTimeChange('00:50:00')}>
-                      50m Goal
-                    </Button>
-                    <Button size="xs" variant="light" color="cyan" onClick={() => handleFinishTimeChange('00:55:00')}>
-                      55m Goal
-                    </Button>
-                  </>
-                )}
-                {selectedMarathon === 'new_york' && selectedDistance === '5k' && (
-                  <>
-                    <Button size="xs" variant="light" color="cyan" onClick={() => handleFinishTimeChange('00:22:00')}>
-                      22m Goal
-                    </Button>
-                    <Button size="xs" variant="light" color="cyan" onClick={() => handleFinishTimeChange('00:25:00')}>
-                      25m Goal
-                    </Button>
-                    <Button size="xs" variant="light" color="cyan" onClick={() => handleFinishTimeChange('00:30:00')}>
-                      30m Goal
-                    </Button>
-                  </>
-                )}
-
-                <Button
-                  size="xs"
-                  variant="default"
-                  leftSection={<IconMapPin size={14} />}
-                  onClick={() => setIsPinDropActive(true)}
-                >
-                  Drop Pin
-                </Button>
-
-                <Button
-                  size="xs"
-                  variant="subtle"
-                  color="violet"
-                  leftSection={<IconPlayerPlay size={14} />}
-                  onClick={handleStartDemo}
-                >
-                  Preview Simulation
-                </Button>
-              </Group>
-            </Card>
+            <AwaitingRunnerCard
+              marathonInfo={marathonInfo}
+              selectedMarathon={selectedMarathon}
+              selectedDistance={selectedDistance}
+              distanceOption={distanceOption}
+              onOpenRaceModal={() => setRaceModalOpen(true)}
+              onFinishTimeChange={handleFinishTimeChange}
+              onOpenPinModal={() => setIsPinDropActive(true)}
+              onStartDemo={handleStartDemo}
+            />
           )}
         </Box>
 
