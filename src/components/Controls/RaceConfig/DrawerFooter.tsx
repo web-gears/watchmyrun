@@ -53,7 +53,7 @@ export function DrawerFooter() {
         </Tooltip>
       </Group>
       <Text size="10px" c="dimmed" ta="center" mt={6} style={{ opacity: 0.8 }}>
-        © {new Date().getFullYear()} WatchMy.Run • Developed by Volodymyr Hartsev
+        Map data © OpenStreetMap & CARTO • © {new Date().getFullYear()} WatchMy.Run
       </Text>
     </Box>
   );

@@ -105,6 +105,7 @@ export function MarathonMap({
       center: initialCenter,
       zoom: 12,
       zoomControl: false,
+      attributionControl: false,
       doubleClickZoom: true,
       scrollWheelZoom: true,
       touchZoom: true,

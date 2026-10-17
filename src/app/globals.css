@@ -46,6 +46,10 @@ main {
   font-family: inherit;
 }
 
+.leaflet-control-attribution {
+  display: none !important;
+}
+
 /* Runner pulsing marker */
 .runner-marker-pulse {
   position: relative;

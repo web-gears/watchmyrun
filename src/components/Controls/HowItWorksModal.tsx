@@ -335,7 +335,7 @@ export function HowItWorksModal({
         </Group>
 
         <Text size="11px" c="dimmed" ta="center" mt={2} style={{ opacity: 0.75 }}>
-          © {new Date().getFullYear()} WatchMy.Run • Developed by Volodymyr Hartsev
+          Map data © OpenStreetMap & CARTO • © {new Date().getFullYear()} WatchMy.Run
         </Text>
       </Stack>
     </Modal>
