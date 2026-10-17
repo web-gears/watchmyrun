@@ -1,11 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <defs>
     <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0284c7" />
-      <stop offset="100%" stop-color="#38bdf8" />
+      <stop offset="0%" stop-color="#0369a1" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+    <linearGradient id="sweep" x1="50%" y1="50%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.5" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
     </linearGradient>
   </defs>
-  <rect width="100" height="100" rx="22" fill="url(#g)" />
-  <circle cx="50" cy="50" r="30" fill="none" stroke="#ffffff" stroke-width="6" opacity="0.4" />
-  <path d="M46 28 C49 28 51 26 51 23 C51 20 49 18 46 18 C43 18 41 20 41 23 C41 26 43 28 46 28 Z M38 48 L46 39 L41 33 C39 31 36 30 33 32 L26 36 L29 42 L34 39 L38 48 Z M45 44 L49 48 L46 62 L51 66 L59 47 C60 45 59 42 57 40 L50 34 L45 44 Z M41 64 L34 76 L39 79 L47 67 L41 64 Z" fill="#ffffff" />
+  <rect width="100" height="100" rx="24" fill="url(#g)" />
+  <!-- Radar Target Rings -->
+  <circle cx="50" cy="50" r="34" stroke="#ffffff" stroke-width="3" stroke-dasharray="4 4" fill="none" opacity="0.35" />
+  <circle cx="50" cy="50" r="22" stroke="#ffffff" stroke-width="3" fill="none" opacity="0.6" />
+  <!-- Radar Sweep Cone -->
+  <path d="M 50 50 L 78 22 A 38 38 0 0 0 32 15 Z" fill="url(#sweep)" />
+  <!-- Center Beacon Hub -->
+  <circle cx="50" cy="50" r="8" fill="#ffffff" />
+  <circle cx="50" cy="50" r="4.5" fill="#0284c7" />
+  <!-- Locked Runner Signal Dot -->
+  <circle cx="68" cy="30" r="5" fill="#38bdf8" stroke="#ffffff" stroke-width="2" />
 </svg>

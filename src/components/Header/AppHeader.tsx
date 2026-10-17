@@ -11,7 +11,6 @@ import {
   Burger,
 } from '@mantine/core';
 import {
-  IconFlame,
   IconMapPin,
   IconChevronDown,
   IconInfoCircle,
@@ -76,14 +75,33 @@ export function AppHeader({
                   width: 32,
                   height: 32,
                   borderRadius: 8,
-                  background: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)',
+                  overflow: 'hidden',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: 'white',
+                  flexShrink: 0,
                 }}
+                aria-hidden="true"
               >
-                <IconFlame size={20} stroke={2.2} />
+                <svg viewBox="0 0 100 100" width="32" height="32" style={{ display: 'block' }}>
+                  <defs>
+                    <linearGradient id="header-radar-g" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#0369a1" />
+                      <stop offset="100%" stopColor="#0284c7" />
+                    </linearGradient>
+                    <linearGradient id="header-sweep-g" x1="50%" y1="50%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#ffffff" stopOpacity="0.5" />
+                      <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="100" height="100" rx="24" fill="url(#header-radar-g)" />
+                  <circle cx="50" cy="50" r="34" stroke="#ffffff" strokeWidth="3" strokeDasharray="4 4" fill="none" opacity="0.35" />
+                  <circle cx="50" cy="50" r="22" stroke="#ffffff" strokeWidth="3" fill="none" opacity="0.6" />
+                  <path d="M 50 50 L 78 22 A 38 38 0 0 0 32 15 Z" fill="url(#header-sweep-g)" />
+                  <circle cx="50" cy="50" r="8" fill="#ffffff" />
+                  <circle cx="50" cy="50" r="4.5" fill="#0284c7" />
+                  <circle cx="68" cy="30" r="5" fill="#38bdf8" stroke="#ffffff" strokeWidth="2" />
+                </svg>
               </Box>
               <Box>
                 <Text fw={800} size="sm" style={{ lineHeight: 1.1, letterSpacing: '-0.02em' }}>
