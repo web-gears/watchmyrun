@@ -135,10 +135,10 @@ export function HowItWorksModal({
                 </ThemeIcon>
                 <div>
                   <Text fw={700} size="xs">
-                    2. AirTag or Sightings
+                    2. AirTag or Tracking Pins
                   </Text>
                   <Text size="11px" c="dimmed" mt={2} style={{ lineHeight: 1.3 }}>
-                    Clip an AirTag to laces, attach to a bib, or update progress via crowd sightings.
+                    Clip an AirTag to laces, attach to a bib, or update progress via tracking pins.
                   </Text>
                 </div>
               </Group>
@@ -190,7 +190,7 @@ export function HowItWorksModal({
               </Text>
             </Timeline.Item>
 
-            <Timeline.Item bullet={<IconMapPin size={12} />} title="3. Live Sighting Pins (During the Race)">
+            <Timeline.Item bullet={<IconMapPin size={12} />} title="3. Live Tracking Pins (During the Race)">
               <Text size="xs" c="dimmed" mt={2}>
                 When an AirTag location updates or you spot the runner, tap <b>&quot;Drop Pin&quot;</b> and mark the location. The app recalibrates live pace and updates arrival estimates.
               </Text>

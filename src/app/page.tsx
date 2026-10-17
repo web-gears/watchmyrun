@@ -12,7 +12,7 @@ import {
   Badge,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconRun, IconMapPin, IconPlayerPlay, IconTrophy } from '@tabler/icons-react';
+import { IconRun, IconMapPin, IconPlayerPlay, IconTrophy, IconAdjustments } from '@tabler/icons-react';
 import { AppHeader } from '@/components/Header/AppHeader';
 import { MapWrapper } from '@/components/Map/MapWrapper';
 import { RaceConfigDrawer } from '@/components/Controls/RaceConfigDrawer';
@@ -22,6 +22,8 @@ import { PinDropModal } from '@/components/Controls/PinDropModal';
 import { EditPinModal } from '@/components/Controls/EditPinModal';
 import { RunnerStatusHUD } from '@/components/HUD/RunnerStatusHUD';
 import { SpectatorWindowCard } from '@/components/HUD/SpectatorWindowCard';
+import { UndoToast } from '@/components/Common/UndoToast';
+import { SwitchRaceConfirmModal } from '@/components/Controls/SwitchRaceConfirmModal';
 import {
   NEW_YORK_COURSES,
   RaceDistanceId,
@@ -67,6 +69,9 @@ export default function MarathonTrackerPage() {
   const [selectedDistance, setSelectedDistance] = useState<RaceDistanceId>('marathon');
   const [raceModalOpen, setRaceModalOpen] = useState<boolean>(false);
   const [howItWorksModalOpen, setHowItWorksModalOpen] = useState<boolean>(false);
+  const [pendingMarathonId, setPendingMarathonId] = useState<MarathonId | null>(null);
+  const [undoToast, setUndoToast] = useState<{ message: string; action: () => void } | null>(null);
+  const undoTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const marathonInfo: MarathonInfo = useMemo(() => {
     return MARATHON_REGISTRY[selectedMarathon] || MARATHON_REGISTRY.new_york;
@@ -129,9 +134,10 @@ export default function MarathonTrackerPage() {
   const spectatorMile = spectatorSpots[0] ? Math.round(spectatorSpots[0].mile) : undefined;
   const spectatorDistMList = useMemo(() => spectatorSpots.map((s) => s.distM), [spectatorSpots]);
 
-  // 5. Mobile Drawer
+  // 5. Mobile Drawer & Desktop Panel
   const [mobileDrawerOpened, { open: openMobileDrawer, close: closeMobileDrawer }] =
     useDisclosure(false);
+  const [desktopDrawerCollapsed, setDesktopDrawerCollapsed] = useState(false);
 
   // 6. Clock & Simulation State (Off by default on clean load)
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
@@ -300,25 +306,72 @@ export default function MarathonTrackerPage() {
     }
   }, [selectedMarathon, selectedDistance, startTimeStr, finishTimeStr, paceStr, strategy, pins, spectatorSpots]);
 
-  // Handle switching World Marathon Majors
-  const handleMarathonChange = (marathonId: MarathonId) => {
-    setSelectedMarathon(marathonId);
-    setSelectedDistance('marathon');
-
-    const info = MARATHON_REGISTRY[marathonId];
-    if (info) {
-      setStartTimeStr(info.defaultStartTime);
-      // Update goal finish time and pace to match the newly selected major's baseline
-      if (finishTimeStr && paceStr) {
-        setFinishTimeStr(info.defaultFinishTime);
-        setPaceStr(info.defaultPace);
-      }
+  // Reversible action undo handlers
+  const triggerUndo = useCallback((message: string, action: () => void) => {
+    if (undoTimerRef.current) {
+      clearTimeout(undoTimerRef.current);
     }
+    setUndoToast({ message, action });
+    undoTimerRef.current = setTimeout(() => {
+      setUndoToast(null);
+    }, 8000);
+  }, []);
 
-    // Reset pins and spectator stations when changing courses
-    setPins([]);
-    setSpectatorSpots([]);
-  };
+  const handleUndo = useCallback(() => {
+    if (undoToast) {
+      undoToast.action();
+      if (undoTimerRef.current) {
+        clearTimeout(undoTimerRef.current);
+      }
+      setUndoToast(null);
+    }
+  }, [undoToast]);
+
+  const handleCloseUndo = useCallback(() => {
+    if (undoTimerRef.current) {
+      clearTimeout(undoTimerRef.current);
+    }
+    setUndoToast(null);
+  }, []);
+
+  // Handle switching World Marathon Majors with confirmation if data exists
+  const confirmMarathonChange = useCallback(
+    (marathonId: MarathonId) => {
+      setSelectedMarathon(marathonId);
+      setSelectedDistance('marathon');
+
+      const info = MARATHON_REGISTRY[marathonId];
+      if (info) {
+        setStartTimeStr(info.defaultStartTime);
+        // Update goal finish time and pace to match the newly selected major's baseline
+        if (finishTimeStr && paceStr) {
+          setFinishTimeStr(info.defaultFinishTime);
+          setPaceStr(info.defaultPace);
+        }
+      }
+
+      // Reset pins and spectator stations when changing courses
+      setPins([]);
+      setSpectatorSpots([]);
+      setPendingMarathonId(null);
+    },
+    [finishTimeStr, paceStr]
+  );
+
+  const handleMarathonChange = useCallback(
+    (marathonId: MarathonId) => {
+      if (marathonId === selectedMarathon) return;
+
+      // Guard against accidental data loss if tracking pins or cheer spots are configured
+      if (pins.length > 0 || spectatorSpots.length > 0) {
+        setPendingMarathonId(marathonId);
+        return;
+      }
+
+      confirmMarathonChange(marathonId);
+    },
+    [selectedMarathon, pins.length, spectatorSpots.length, confirmMarathonChange]
+  );
 
   // Handle switching distances for New York
   const handleDistanceChange = (distId: RaceDistanceId) => {
@@ -466,10 +519,30 @@ export default function MarathonTrackerPage() {
     }
   }, [distanceOption.distanceKm, pacingUnit]);
 
-  const handleRemovePin = useCallback((id: string) => {
-    setPins((prev) => prev.filter((p) => p.id !== id));
-    setEditingPin((cur) => (cur?.id === id ? null : cur));
-  }, []);
+  const handleRemovePin = useCallback(
+    (id: string) => {
+      const pinToRemove = pins.find((p) => p.id === id);
+      if (!pinToRemove) return;
+      const previousPins = [...pins];
+      setPins((prev) => prev.filter((p) => p.id !== id));
+      setEditingPin((cur) => (cur?.id === id ? null : cur));
+      triggerUndo(
+        `Removed pin at Mile ${(pinToRemove.snappedDistM / 1609.344).toFixed(1)}`,
+        () => setPins(previousPins)
+      );
+    },
+    [pins, triggerUndo]
+  );
+
+  const handleClearAllPins = useCallback(() => {
+    if (pins.length === 0) return;
+    const previousPins = [...pins];
+    setPins([]);
+    triggerUndo(
+      `Cleared ${previousPins.length} tracking pin${previousPins.length > 1 ? 's' : ''}`,
+      () => setPins(previousPins)
+    );
+  }, [pins, triggerUndo]);
 
   const handleTogglePresetSpot = useCallback(
     (preset: CheerSpotPreset) => {
@@ -536,13 +609,29 @@ export default function MarathonTrackerPage() {
     [courseData.points]
   );
 
-  const handleRemoveSpectatorSpot = useCallback((spotId: string) => {
-    setSpectatorSpots((prev) => prev.filter((s) => s.id !== spotId));
-  }, []);
+  const handleRemoveSpectatorSpot = useCallback(
+    (spotId: string) => {
+      const spotToRemove = spectatorSpots.find((s) => s.id === spotId);
+      if (!spotToRemove) return;
+      const previousSpots = [...spectatorSpots];
+      setSpectatorSpots((prev) => prev.filter((s) => s.id !== spotId));
+      triggerUndo(
+        `Removed cheer station: ${spotToRemove.name}`,
+        () => setSpectatorSpots(previousSpots)
+      );
+    },
+    [spectatorSpots, triggerUndo]
+  );
 
   const handleClearAllSpectatorSpots = useCallback(() => {
+    if (spectatorSpots.length === 0) return;
+    const previousSpots = [...spectatorSpots];
     setSpectatorSpots([]);
-  }, []);
+    triggerUndo(
+      `Cleared ${previousSpots.length} cheer station${previousSpots.length > 1 ? 's' : ''}`,
+      () => setSpectatorSpots(previousSpots)
+    );
+  }, [spectatorSpots, triggerUndo]);
 
   const handleSetSpectatorMile = useCallback(
     (mile: number) => {
@@ -613,15 +702,18 @@ export default function MarathonTrackerPage() {
 
         {/* Desktop Left Floating Marathon Configuration Card */}
         <Box
-          visibleFrom="md"
+          visibleFrom="lg"
           style={{
             position: 'absolute',
             top: 16,
             left: 16,
-            width: 380,
+            width: 360,
             maxWidth: 'calc(100vw - 32px)',
             zIndex: 1000,
-            pointerEvents: 'none',
+            pointerEvents: desktopDrawerCollapsed ? 'none' : 'auto',
+            transform: desktopDrawerCollapsed ? 'translateX(calc(-100% - 32px))' : 'translateX(0)',
+            transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease',
+            opacity: desktopDrawerCollapsed ? 0 : 1,
           }}
         >
           <Card
@@ -651,6 +743,7 @@ export default function MarathonTrackerPage() {
                 marathonInfo={marathonInfo}
                 onSelectMarathon={handleMarathonChange}
                 onOpenRaceModal={() => setRaceModalOpen(true)}
+                onCollapse={() => setDesktopDrawerCollapsed(true)}
                 selectedDistance={selectedDistance}
                 onSelectDistance={handleDistanceChange}
                 distanceOption={distanceOption}
@@ -669,7 +762,7 @@ export default function MarathonTrackerPage() {
                 onApplyCalibratedPace={handleApplyCalibratedPace}
                 onEditPin={handleEditPin}
                 onRemovePin={handleRemovePin}
-                onClearAllPins={() => setPins([])}
+                onClearAllPins={handleClearAllPins}
                 isPinDropActive={isPinDropActive}
                 onTogglePinDropMode={() => setIsPinDropActive(!isPinDropActive)}
                 spectatorSpots={spectatorSpots}
@@ -689,13 +782,44 @@ export default function MarathonTrackerPage() {
           </Card>
         </Box>
 
+        {/* Desktop Restore Pill Button when Left Floating Card is Collapsed */}
+        <Box
+          visibleFrom="lg"
+          style={{
+            position: 'absolute',
+            top: 16,
+            left: 16,
+            zIndex: 1000,
+            pointerEvents: desktopDrawerCollapsed ? 'auto' : 'none',
+            transform: desktopDrawerCollapsed ? 'translateX(0)' : 'translateX(-120%)',
+            transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease',
+            opacity: desktopDrawerCollapsed ? 1 : 0,
+          }}
+        >
+          <Button
+            variant="default"
+            radius="md"
+            size="sm"
+            className="glass-panel"
+            leftSection={<Text size="sm">{marathonInfo.flag}</Text>}
+            rightSection={<IconAdjustments size={14} />}
+            onClick={() => setDesktopDrawerCollapsed(false)}
+            style={{
+              boxShadow: '0 4px 16px rgba(0,0,0,0.14)',
+              border: '1px solid var(--mantine-color-default-border)',
+              fontWeight: 600,
+            }}
+          >
+            Race Controls
+          </Button>
+        </Box>
+
         {/* Bottom HUD: Live Forecast OR Awaiting Runner Data Prompt */}
         <Box
+          className={`bottom-hud-container ${!desktopDrawerCollapsed ? 'bottom-hud-desktop-offset' : ''}`}
           style={{
             position: 'absolute',
             bottom: 16,
-            left: '50%',
-            transform: 'translateX(-50%)',
             zIndex: 1000,
             width: 'calc(100% - 32px)',
             maxWidth: 580,
@@ -785,10 +909,10 @@ export default function MarathonTrackerPage() {
                 }}
               >
                 <Text size="xs" fw={700} c="cyan.8">
-                  Phone-free tracking with AirTag or sightings
+                  Phone-free tracking with AirTag or tracking pins
                 </Text>
                 <Text size="11px" c="dimmed" mt={2}>
-                  Track your runner using AirTag updates or visual sightings along the course. Drop pins to update live pace and cheer station arrival windows.
+                  Track your runner using AirTag updates or course checkpoints. Drop tracking pins to update live pace and cheer station arrival windows.
                 </Text>
               </Box>
 
@@ -876,23 +1000,47 @@ export default function MarathonTrackerPage() {
           )}
         </Box>
 
-        {/* Spectator Meeting Station Card (Floating Top-Right on Desktop) */}
+        {/* Spectator Meeting Station Card */}
         {spectatorWindows.length > 0 && (
-          <Box
-            visibleFrom="sm"
-            style={{
-              position: 'absolute',
-              top: 16,
-              right: 16,
-              zIndex: 1000,
-            }}
-          >
-            <SpectatorWindowCard
-              meetingWindows={spectatorWindows}
-              onClose={handleClearAllSpectatorSpots}
-              onRemoveSpot={handleRemoveSpectatorSpot}
-            />
-          </Box>
+          <>
+            {/* Desktop / Tablet View */}
+            <Box
+              visibleFrom="sm"
+              style={{
+                position: 'absolute',
+                top: 16,
+                right: 16,
+                zIndex: 1000,
+                pointerEvents: 'auto',
+              }}
+            >
+              <SpectatorWindowCard
+                meetingWindows={spectatorWindows}
+                onClose={handleClearAllSpectatorSpots}
+                onRemoveSpot={handleRemoveSpectatorSpot}
+              />
+            </Box>
+
+            {/* Mobile View */}
+            <Box
+              hiddenFrom="sm"
+              style={{
+                position: 'absolute',
+                top: 10,
+                left: 10,
+                right: 10,
+                zIndex: 1000,
+                pointerEvents: 'auto',
+              }}
+            >
+              <SpectatorWindowCard
+                meetingWindows={spectatorWindows}
+                onClose={handleClearAllSpectatorSpots}
+                onRemoveSpot={handleRemoveSpectatorSpot}
+                isMobile
+              />
+            </Box>
+          </>
         )}
       </Box>
 
@@ -956,7 +1104,7 @@ export default function MarathonTrackerPage() {
               closeMobileDrawer();
             }}
             onRemovePin={handleRemovePin}
-            onClearAllPins={() => setPins([])}
+            onClearAllPins={handleClearAllPins}
             isPinDropActive={isPinDropActive}
             onTogglePinDropMode={() => {
               setIsPinDropActive(!isPinDropActive);
@@ -1032,6 +1180,31 @@ export default function MarathonTrackerPage() {
           onDeletePin={handleRemovePin}
         />
       )}
+
+      {/* 7. Destructive Race Switch Confirmation Modal */}
+      <SwitchRaceConfirmModal
+        opened={Boolean(pendingMarathonId)}
+        onClose={() => setPendingMarathonId(null)}
+        onConfirm={() => {
+          if (pendingMarathonId) {
+            confirmMarathonChange(pendingMarathonId);
+          }
+        }}
+        currentMarathonName={marathonInfo.name}
+        targetMarathonName={
+          pendingMarathonId ? MARATHON_REGISTRY[pendingMarathonId]?.name || '' : ''
+        }
+        pinsCount={pins.length}
+        spotsCount={spectatorSpots.length}
+      />
+
+      {/* 8. Reversible Action Undo Notification (8-Second Safety Window) */}
+      <UndoToast
+        opened={Boolean(undoToast)}
+        message={undoToast?.message || ''}
+        onUndo={handleUndo}
+        onClose={handleCloseUndo}
+      />
     </Box>
   );
 }

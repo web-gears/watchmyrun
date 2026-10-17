@@ -15,6 +15,7 @@ export function ThemeToggle() {
       radius="md"
       aria-label="Toggle color scheme"
       title="Toggle color scheme"
+      style={{ minWidth: 44, minHeight: 44 }}
     >
       <IconSun className="theme-icon-sun" size={18} stroke={1.8} color="#f59e0b" />
       <IconMoon className="theme-icon-moon" size={18} stroke={1.8} color="#6366f1" />

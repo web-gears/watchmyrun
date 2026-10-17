@@ -6,32 +6,25 @@ import {
   Stack,
   Text,
   TextInput,
-  NumberInput,
-  Slider,
   Button,
   Group,
   Badge,
   ActionIcon,
   Tooltip,
-  Tabs,
-  Alert,
   Box,
   Divider,
 } from '@mantine/core';
 import {
   IconPencil,
   IconClock,
-  IconMapPin,
   IconTrash,
   IconCheck,
-  IconAlertCircle,
-  IconArrowsExchange,
-  IconInfoCircle,
 } from '@tabler/icons-react';
 import { CoursePoint, TrackingPin } from '@/lib/forecasting/types';
 import { interpolateAtDistance } from '@/lib/forecasting/geodesy';
 import { snapCoordinateToCourse } from '@/lib/forecasting/snapToCourse';
-import { formatPace, formatSecondsToHms } from '@/lib/forecasting/pacingModels';
+import { PinPositionTabs } from './Pins/PinPositionTabs';
+import { PinImpliedPaceCard } from './Pins/PinImpliedPaceCard';
 
 interface EditPinModalProps {
   opened: boolean;
@@ -62,7 +55,6 @@ export function EditPinModal({
   const [lon, setLon] = useState<number>(0);
   const [ele, setEle] = useState<number>(0);
   const [note, setNote] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<string | null>('distance');
 
   const maxCourseKm = Number((totalCourseDistM / 1000).toFixed(2));
   const distMi = Number((distKm / 1.609344).toFixed(2));
@@ -90,7 +82,7 @@ export function EditPinModal({
 
   if (!pin) return null;
 
-  // Handle distance adjustment (slider or number input)
+  // Handle distance adjustment
   const handleDistanceChange = (newKm: number) => {
     const clampedKm = Math.max(0, Math.min(newKm, maxCourseKm));
     setDistKm(Number(clampedKm.toFixed(2)));
@@ -101,12 +93,6 @@ export function EditPinModal({
     setLat(Number(interpolated.lat.toFixed(6)));
     setLon(Number(interpolated.lon.toFixed(6)));
     setEle(Math.round(interpolated.ele));
-  };
-
-  // Handle miles adjustment
-  const handleMilesChange = (newMi: number) => {
-    const km = newMi * 1.609344;
-    handleDistanceChange(km);
   };
 
   // Adjust time by +/- minutes
@@ -142,36 +128,22 @@ export function EditPinModal({
     }
   };
 
-  // Save changes
-  // Live implied pace calculation
-  let impliedPaceBadge: { paceKm: string; paceMi: string; finishHms: string; secPerKm: number } | null = null;
-  if (distKm > 0 && timeStr && timeStr.includes(':')) {
-    const [h, m] = timeStr.split(':').map((v) => parseInt(v, 10));
-    const [stH, stM] = startTimeStr.split(':').map((v) => parseInt(v, 10));
-    let elapsedMin = (h * 60 + (m || 0)) - (stH * 60 + (stM || 0));
-    if (elapsedMin <= 0) elapsedMin += 24 * 60;
-    const elapsedSec = elapsedMin * 60;
-
-    if (elapsedSec > 60) {
-      const speedMs = Math.max(1.5, Math.min(6.8, (distKm * 1000) / elapsedSec));
-      const secPerKm = 1000 / speedMs;
-      const formatted = formatPace(secPerKm);
-      const totalSec = totalCourseDistM / speedMs;
-      impliedPaceBadge = {
-        paceKm: formatted.minPerKm,
-        paceMi: formatted.minPerMi,
-        finishHms: formatSecondsToHms(totalSec),
-        secPerKm,
-      };
-    }
-  }
-
   const handleSave = () => {
     const [hh, mm] = timeStr.split(':').map((v) => parseInt(v, 10));
     const baseDate = new Date(pin.timestamp);
     const validBase = isNaN(baseDate.getTime()) ? new Date() : baseDate;
 
     validBase.setHours(hh || 0, mm || 0, 0, 0);
+
+    const [stH, stM] = startTimeStr.split(':').map((v) => parseInt(v, 10));
+    let elapsedMin = (hh || 0) * 60 + (mm || 0) - (stH * 60 + (stM || 0));
+    if (elapsedMin <= 0) elapsedMin += 24 * 60;
+    const elapsedSec = elapsedMin * 60;
+    let impliedPaceSecPerKm: number | undefined;
+    if (elapsedSec > 60 && distKm > 0) {
+      const speedMs = Math.max(1.5, Math.min(6.8, (distKm * 1000) / elapsedSec));
+      impliedPaceSecPerKm = 1000 / speedMs;
+    }
 
     const updatedPin: TrackingPin = {
       ...pin,
@@ -182,7 +154,7 @@ export function EditPinModal({
       snappedLat: lat,
       snappedLon: lon,
       snappedEle: ele,
-      impliedPaceSecPerKm: impliedPaceBadge?.secPerKm,
+      impliedPaceSecPerKm,
       note: note.trim() || undefined,
     };
 
@@ -219,19 +191,27 @@ export function EditPinModal({
       <Stack gap="md">
         {/* 1. Observation Time */}
         <Box>
-          <Text size="xs" fw={600} mb={4}>
-            Observation Time (Start Time: {startTimeStr})
-          </Text>
+          <Group justify="space-between" mb={4}>
+            <Text size="xs" fw={600}>
+              Observation Time
+            </Text>
+            <Text size="11px" c="dimmed">
+              Start: {startTimeStr}
+            </Text>
+          </Group>
+
           <Group gap="xs" align="flex-end">
             <TextInput
               style={{ flex: 1 }}
               leftSection={<IconClock size={16} />}
               value={timeStr}
               onChange={(e) => setTimeStr(e.currentTarget.value)}
-              placeholder="HH:mm (e.g. 10:14)"
+              placeholder="HH:mm"
+              size="sm"
+              styles={{ input: { fontVariantNumeric: 'tabular-nums' } }}
             />
             <Button
-              size="xs"
+              size="sm"
               variant="light"
               color="gray"
               onClick={handleSetCurrentTime}
@@ -240,40 +220,35 @@ export function EditPinModal({
             </Button>
           </Group>
 
-          {/* Quick nudge buttons */}
-          <Group gap={6} mt={6}>
-            <Text size="xs" c="dimmed" mr={4}>
-              Nudge:
+          <Group gap={4} mt={6} justify="space-between">
+            <Group gap={4}>
+              <Button size="compact-xs" variant="default" onClick={() => handleAdjustMinutes(-5)}>
+                -5m
+              </Button>
+              <Button size="compact-xs" variant="default" onClick={() => handleAdjustMinutes(-1)}>
+                -1m
+              </Button>
+              <Button size="compact-xs" variant="default" onClick={() => handleAdjustMinutes(1)}>
+                +1m
+              </Button>
+              <Button size="compact-xs" variant="default" onClick={() => handleAdjustMinutes(5)}>
+                +5m
+              </Button>
+            </Group>
+            <Text size="11px" c="dimmed">
+              Quick adjust
             </Text>
-            <Button size="compact-xs" variant="default" onClick={() => handleAdjustMinutes(-5)}>
-              -5m
-            </Button>
-            <Button size="compact-xs" variant="default" onClick={() => handleAdjustMinutes(-1)}>
-              -1m
-            </Button>
-            <Button size="compact-xs" variant="default" onClick={() => handleAdjustMinutes(1)}>
-              +1m
-            </Button>
-            <Button size="compact-xs" variant="default" onClick={() => handleAdjustMinutes(5)}>
-              +5m
-            </Button>
           </Group>
 
-          {impliedPaceBadge && (
-            <Stack gap={4} mt="xs" p="xs" style={{ background: 'rgba(16, 185, 129, 0.08)', border: '1px solid #10b981', borderRadius: 8 }}>
-              <Group justify="space-between">
-                <Text size="xs" fw={700} c="emerald.7">
-                  ⚡ Recalculated Pace:
-                </Text>
-                <Badge color="emerald" variant="filled" size="sm">
-                  {impliedPaceBadge.paceKm} ({impliedPaceBadge.paceMi})
-                </Badge>
-              </Group>
-              <Text size="xs" c="dimmed">
-                Projected Finish: <b>{impliedPaceBadge.finishHms}</b>
-              </Text>
-            </Stack>
-          )}
+          {/* Implied Pace Preview Card */}
+          <Box mt="xs">
+            <PinImpliedPaceCard
+              distM={distKm * 1000}
+              timeStr={timeStr}
+              startTimeStr={startTimeStr}
+              totalCourseDistM={totalCourseDistM}
+            />
+          </Box>
         </Box>
 
         <Divider />
@@ -289,115 +264,31 @@ export function EditPinModal({
             </Badge>
           </Group>
 
-          <Tabs value={activeTab} onChange={setActiveTab}>
-            <Tabs.List mb="xs">
-              <Tabs.Tab value="distance" leftSection={<IconMapPin size={14} />}>
-                Along Course
-              </Tabs.Tab>
-              <Tabs.Tab value="coords" leftSection={<IconArrowsExchange size={14} />}>
-                Coordinates
-              </Tabs.Tab>
-            </Tabs.List>
-
-            <Tabs.Panel value="distance">
-              <Stack gap="xs">
-                <Group grow>
-                  <NumberInput
-                    label="Distance (km)"
-                    size="xs"
-                    value={distKm}
-                    onChange={(val) => handleDistanceChange(typeof val === 'number' ? val : 0)}
-                    min={0}
-                    max={maxCourseKm}
-                    step={0.1}
-                    decimalScale={2}
-                  />
-                  <NumberInput
-                    label="Distance (miles)"
-                    size="xs"
-                    value={distMi}
-                    onChange={(val) => handleMilesChange(typeof val === 'number' ? val : 0)}
-                    min={0}
-                    max={Number((maxCourseKm / 1.609344).toFixed(2))}
-                    step={0.1}
-                    decimalScale={2}
-                  />
-                </Group>
-
-                <Box px={6} pt={4}>
-                  <Slider
-                    value={distKm}
-                    onChange={handleDistanceChange}
-                    min={0}
-                    max={maxCourseKm}
-                    step={0.05}
-                    label={(val) => `${val.toFixed(2)} km (${(val / 1.609344).toFixed(1)} mi)`}
-                    color="emerald"
-                    marks={[
-                      { value: 0, label: '0k' },
-                      { value: maxCourseKm * 0.25, label: '25%' },
-                      { value: maxCourseKm * 0.5, label: 'Half' },
-                      { value: maxCourseKm * 0.75, label: '75%' },
-                      { value: maxCourseKm, label: 'Finish' },
-                    ]}
-                  />
-                </Box>
-
-                <Group justify="space-between" mt={8}>
-                  <Text size="xs" c="dimmed">
-                    Elevation at point: <b>{ele}m</b>
-                  </Text>
-                  <Text size="xs" c="dimmed">
-                    Coordinates: <b>{lat.toFixed(4)}, {lon.toFixed(4)}</b>
-                  </Text>
-                </Group>
-              </Stack>
-            </Tabs.Panel>
-
-            <Tabs.Panel value="coords">
-              <Stack gap="xs">
-                <Group grow>
-                  <NumberInput
-                    label="Latitude"
-                    size="xs"
-                    value={lat}
-                    onChange={(val) => setLat(typeof val === 'number' ? val : lat)}
-                    decimalScale={6}
-                    step={0.0001}
-                  />
-                  <NumberInput
-                    label="Longitude"
-                    size="xs"
-                    value={lon}
-                    onChange={(val) => setLon(typeof val === 'number' ? val : lon)}
-                    decimalScale={6}
-                    step={0.0001}
-                  />
-                </Group>
-                <Button
-                  size="xs"
-                  variant="light"
-                  color="blue"
-                  leftSection={<IconMapPin size={14} />}
-                  onClick={handleManualSnap}
-                >
-                  Snap Coordinates to Course
-                </Button>
-              </Stack>
-            </Tabs.Panel>
-          </Tabs>
-
-          <Alert
-            icon={<IconInfoCircle size={15} />}
-            color="gray"
-            variant="light"
-            p="xs"
-            mt="xs"
-          >
-            <Text size="xs">
-              💡 <b>Tip:</b> You can also drag the pin directly on the interactive map to reposition it instantly!
-            </Text>
-          </Alert>
+          <PinPositionTabs
+            distKm={distKm}
+            maxCourseKm={maxCourseKm}
+            onDistanceChange={handleDistanceChange}
+            lat={lat}
+            lon={lon}
+            ele={ele}
+            onLatChange={(newLat) => {
+              setLat(newLat);
+              const snap = snapCoordinateToCourse(newLat, lon, points);
+              if (snap) {
+                setDistKm(Number((snap.snappedDistM / 1000).toFixed(2)));
+                setEle(Math.round(snap.snappedEle));
+              }
+            }}
+            onLonChange={(newLon) => {
+              setLon(newLon);
+              const snap = snapCoordinateToCourse(lat, newLon, points);
+              if (snap) {
+                setDistKm(Number((snap.snappedDistM / 1000).toFixed(2)));
+                setEle(Math.round(snap.snappedEle));
+              }
+            }}
+            onManualSnap={handleManualSnap}
+          />
         </Box>
 
         <Divider />
@@ -406,7 +297,7 @@ export function EditPinModal({
         <Box>
           <TextInput
             label="Note / Source"
-            placeholder="e.g. AirTag ping, 1st Ave sighting"
+            placeholder="e.g. AirTag ping, 1st Ave checkpoint"
             value={note}
             onChange={(e) => setNote(e.currentTarget.value)}
             size="xs"

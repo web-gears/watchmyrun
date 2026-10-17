@@ -14,7 +14,7 @@ import {
 import { IconMapPin, IconClock, IconAlertCircle, IconCheck } from '@tabler/icons-react';
 import { snapCoordinateToCourse } from '@/lib/forecasting/snapToCourse';
 import { CoursePoint, TrackingPin } from '@/lib/forecasting/types';
-import { formatPace, formatSecondsToHms } from '@/lib/forecasting/pacingModels';
+import { PinImpliedPaceCard } from './Pins/PinImpliedPaceCard';
 
 interface PinDropModalProps {
   opened: boolean;
@@ -67,36 +67,11 @@ export function PinDropModal({
       const hh = arrivalDate.getHours().toString().padStart(2, '0');
       const mm = arrivalDate.getMinutes().toString().padStart(2, '0');
       setTimeStr(`${hh}:${mm}`);
-      setNote('AirTag / Spectator sighting');
+      setNote('AirTag / Spectator check-in');
     }
-  }, [opened, clickedCoord?.lat, clickedCoord?.lon]); // Stable dependencies: typing into timeStr will NOT overwrite it!
+  }, [opened, clickedCoord?.lat, clickedCoord?.lon]);
 
   if (!clickedCoord) return null;
-
-  // Live implied pace calculation from start time to this observation time
-  let impliedPaceBadge: { paceKm: string; paceMi: string; finishHms: string; secPerKm: number } | null = null;
-  if (snapResult && timeStr && timeStr.includes(':')) {
-    const [h, m] = timeStr.split(':').map((v) => parseInt(v, 10));
-    const [stH, stM] = (startTimeStr || '09:10').split(':').map((v) => parseInt(v, 10));
-    if (!isNaN(h) && !isNaN(m)) {
-      let elapsedMin = (h * 60 + m) - (stH * 60 + (stM || 0));
-      if (elapsedMin <= 0) elapsedMin += 24 * 60;
-      const elapsedSec = elapsedMin * 60;
-
-      if (elapsedSec > 60 && snapResult.snappedDistM > 0) {
-        const speedMs = Math.max(1.5, Math.min(6.8, snapResult.snappedDistM / elapsedSec));
-        const secPerKm = 1000 / speedMs;
-        const formatted = formatPace(secPerKm);
-        const totalSec = totalCourseDistM / speedMs;
-        impliedPaceBadge = {
-          paceKm: formatted.minPerKm,
-          paceMi: formatted.minPerMi,
-          finishHms: formatSecondsToHms(totalSec),
-          secPerKm,
-        };
-      }
-    }
-  }
 
   const applyOffsetMinutes = (deltaMin: number) => {
     if (!timeStr || !timeStr.includes(':')) return;
@@ -144,6 +119,16 @@ export function PinDropModal({
     const pinDate = new Date();
     pinDate.setHours(hh, mm, ss, 0);
 
+    let impliedPaceSecPerKm: number | undefined;
+    const [stH, stM] = (startTimeStr || '09:10').split(':').map((v) => parseInt(v, 10));
+    let elapsedMin = hh * 60 + mm - (stH * 60 + (stM || 0));
+    if (elapsedMin <= 0) elapsedMin += 24 * 60;
+    const elapsedSec = elapsedMin * 60;
+    if (elapsedSec > 60 && snapResult.snappedDistM > 0) {
+      const speedMs = Math.max(1.5, Math.min(6.8, snapResult.snappedDistM / elapsedSec));
+      impliedPaceSecPerKm = 1000 / speedMs;
+    }
+
     const newPin: TrackingPin = {
       id: `pin_${Date.now()}`,
       lat: clickedCoord.lat,
@@ -153,7 +138,7 @@ export function PinDropModal({
       snappedLat: snapResult.snappedLat,
       snappedLon: snapResult.snappedLon,
       snappedEle: snapResult.snappedEle,
-      impliedPaceSecPerKm: impliedPaceBadge?.secPerKm,
+      impliedPaceSecPerKm,
       note: note.trim() || undefined,
     };
 
@@ -178,7 +163,7 @@ export function PinDropModal({
     >
       <Stack gap="md">
         <Text size="sm" c="dimmed">
-          Drop a pin from your <b>Apple AirTag</b>, <b>Find My</b>, or visual sighting to
+          Drop a pin from your <b>Apple AirTag</b>, <b>Find My</b>, or course check-in to
           recalibrate the runner&apos;s live pace and prediction precision.
         </Text>
 
@@ -280,20 +265,13 @@ export function PinDropModal({
           </Group>
         </Stack>
 
-        {impliedPaceBadge && (
-          <Stack gap={4} p="xs" style={{ background: 'rgba(16, 185, 129, 0.08)', border: '1px solid #10b981', borderRadius: 8 }}>
-            <Group justify="space-between">
-              <Text size="xs" fw={700} c="emerald.7">
-                ⚡ Recalculated Runner Pace:
-              </Text>
-              <Badge color="emerald" variant="filled" size="sm">
-                {impliedPaceBadge.paceKm} ({impliedPaceBadge.paceMi})
-              </Badge>
-            </Group>
-            <Text size="xs" c="dimmed">
-              Projected Finish Time: <b>{impliedPaceBadge.finishHms}</b>
-            </Text>
-          </Stack>
+        {snapResult && (
+          <PinImpliedPaceCard
+            distM={snapResult.snappedDistM}
+            timeStr={timeStr}
+            startTimeStr={startTimeStr}
+            totalCourseDistM={totalCourseDistM}
+          />
         )}
 
         <Stack gap={4}>

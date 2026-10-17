@@ -9,11 +9,8 @@ import {
   Tooltip,
   Box,
   Burger,
-  Popover,
 } from '@mantine/core';
 import {
-  IconShare,
-  IconCheck,
   IconFlame,
   IconMapPin,
   IconChevronDown,
@@ -21,10 +18,10 @@ import {
   IconCoffee,
   IconCloud,
 } from '@tabler/icons-react';
-import { useState } from 'react';
 import { MarathonInfo } from '@/lib/data/marathonRegistry';
 import { RaceDistanceOption } from '@/lib/data/newYorkCourses';
 import { ThemeToggle } from './ThemeToggle';
+import { ShareButton } from './ShareButton';
 
 interface AppHeaderProps {
   marathonInfo: MarathonInfo;
@@ -49,41 +46,6 @@ export function AppHeader({
   statusBadgeText,
   shareUrl,
 }: AppHeaderProps) {
-  const [copied, setCopied] = useState(false);
-
-  const handleShare = async () => {
-    let success = false;
-    const url = shareUrl || (typeof window !== 'undefined' ? window.location.href : '');
-
-    try {
-      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(url);
-        success = true;
-      }
-    } catch {
-      // Fallback
-    }
-
-    if (!success && typeof document !== 'undefined') {
-      try {
-        const textArea = document.createElement('textarea');
-        textArea.value = url;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-9999px';
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-      } catch {
-        // Fallback
-      }
-    }
-
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
-  };
-
   return (
     <>
       <Box
@@ -103,9 +65,10 @@ export function AppHeader({
             <Burger
               opened={isMobileDrawerOpen}
               onClick={onOpenMobileDrawer}
-              hiddenFrom="md"
+              hiddenFrom="lg"
               size="sm"
               aria-label="Toggle race controls drawer"
+              style={{ minWidth: 44, minHeight: 44 }}
             />
             <Group gap="xs" wrap="nowrap">
               <Box
@@ -197,8 +160,10 @@ export function AppHeader({
                 color="cyan"
                 hiddenFrom="md"
                 onClick={onOpenHowItWorksModal}
+                aria-label="How WatchMy.Run works"
+                style={{ minWidth: 44, minHeight: 44 }}
               >
-                <IconInfoCircle size={18} />
+                <IconInfoCircle size={20} />
               </ActionIcon>
             </Tooltip>
 
@@ -210,43 +175,13 @@ export function AppHeader({
               radius="md"
               onClick={onOpenPinModal}
               visibleFrom="xs"
+              style={{ minHeight: 36 }}
             >
               Drop Pin
             </Button>
 
             {/* Share Button with Popover and Tooltip */}
-            <Popover opened={copied} position="bottom-end" withArrow shadow="md">
-              <Popover.Target>
-                <Tooltip label={copied ? 'Copied to clipboard!' : 'Copy shareable link'}>
-                  <ActionIcon
-                    size="lg"
-                    variant={copied ? 'filled' : 'default'}
-                    radius="md"
-                    onClick={handleShare}
-                    color={copied ? 'teal' : undefined}
-                    aria-label="Share race tracking link"
-                  >
-                    {copied ? <IconCheck size={18} color="white" /> : <IconShare size={18} />}
-                  </ActionIcon>
-                </Tooltip>
-              </Popover.Target>
-              <Popover.Dropdown
-                style={{
-                  background: '#10b981',
-                  color: '#ffffff',
-                  border: 'none',
-                  padding: '6px 12px',
-                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
-                }}
-              >
-                <Group gap={6} wrap="nowrap">
-                  <IconCheck size={15} stroke={3} />
-                  <Text size="xs" fw={700} c="white">
-                    Link copied to clipboard!
-                  </Text>
-                </Group>
-              </Popover.Dropdown>
-            </Popover>
+            <ShareButton shareUrl={shareUrl} />
 
             {/* Running Weather Forecast (Run-Weather.com) */}
             <Tooltip label="Race weather forecast (Run-Weather.com)" position="bottom-end" withArrow>
@@ -261,8 +196,9 @@ export function AppHeader({
                 aria-label="Running weather forecast on Run-Weather.com"
                 title="Race weather forecast (Run-Weather.com)"
                 visibleFrom="xs"
+                style={{ minWidth: 44, minHeight: 44 }}
               >
-                <IconCloud size={18} stroke={1.8} color="#0284c7" />
+                <IconCloud size={20} stroke={1.8} color="#0284c7" />
               </ActionIcon>
             </Tooltip>
 
@@ -285,8 +221,9 @@ export function AppHeader({
                 aria-label="Support the project on Ko-fi"
                 title="Support the project: Help keep WatchMy.Run free & cover map/server costs on Ko-fi"
                 visibleFrom="xs"
+                style={{ minWidth: 44, minHeight: 44 }}
               >
-                <IconCoffee size={18} stroke={1.8} color="#f43f5e" />
+                <IconCoffee size={20} stroke={1.8} color="#f43f5e" />
               </ActionIcon>
             </Tooltip>
 
