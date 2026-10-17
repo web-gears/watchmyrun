@@ -178,7 +178,6 @@ export function AppHeader({
                 variant="subtle"
                 radius="md"
                 color="cyan"
-                visibleFrom="sm"
                 hiddenFrom="md"
                 onClick={onOpenHowItWorksModal}
                 aria-label="How WatchMy.Run works"
@@ -248,7 +247,7 @@ export function AppHeader({
               </ActionIcon>
             </Tooltip>
 
-            <ThemeToggle />
+            <ThemeToggle visibleFrom="sm" />
           </Group>
         </Group>
       </Box>

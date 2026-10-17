@@ -3,7 +3,12 @@
 import { ActionIcon, useComputedColorScheme, useMantineColorScheme } from '@mantine/core';
 import { IconMoon, IconSun } from '@tabler/icons-react';
 
-export function ThemeToggle() {
+interface ThemeToggleProps {
+  visibleFrom?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  hiddenFrom?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+}
+
+export function ThemeToggle({ visibleFrom, hiddenFrom }: ThemeToggleProps = {}) {
   const { setColorScheme } = useMantineColorScheme();
   const computedColorScheme = useComputedColorScheme('light', { getInitialValueInEffect: true });
 
@@ -15,6 +20,8 @@ export function ThemeToggle() {
       radius="md"
       aria-label="Toggle color scheme"
       title="Toggle color scheme"
+      visibleFrom={visibleFrom}
+      hiddenFrom={hiddenFrom}
       style={{ minWidth: 44, minHeight: 44 }}
     >
       <IconSun className="theme-icon-sun" size={18} stroke={1.8} color="#f59e0b" />
