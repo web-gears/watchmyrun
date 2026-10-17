@@ -23,18 +23,30 @@ import {
 import { useState } from 'react';
 import { SpectatorMeetingWindow } from '@/lib/forecasting/types';
 
-interface MobileSpectatorTickerProps {
+export interface MobileSpectatorTickerProps {
   windows: SpectatorMeetingWindow[];
   onClose: () => void;
   onRemoveSpot?: (spotId: string) => void;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
 }
 
 export function MobileSpectatorTicker({
   windows,
   onClose,
   onRemoveSpot,
+  isExpanded,
+  onToggleExpand,
 }: MobileSpectatorTickerProps) {
-  const [mobileExpanded, setMobileExpanded] = useState(false);
+  const [internalExpanded, setInternalExpanded] = useState(false);
+  const expanded = isExpanded !== undefined ? isExpanded : internalExpanded;
+  const toggleExpanded = () => {
+    if (onToggleExpand) {
+      onToggleExpand();
+    } else {
+      setInternalExpanded(!internalExpanded);
+    }
+  };
 
   // Find the next upcoming cheer station (closest spot where runner has not yet passed)
   const nextSpot = windows.find((w) => !w.hasRunnerPassed) || windows[windows.length - 1];
@@ -55,9 +67,9 @@ export function MobileSpectatorTicker({
     >
       {/* Mobile Header / Quick Glance Bar */}
       <UnstyledButton
-        onClick={() => setMobileExpanded(!mobileExpanded)}
+        onClick={toggleExpanded}
         style={{ width: '100%', display: 'block' }}
-        aria-label={mobileExpanded ? 'Collapse cheer spots' : 'Expand cheer spots'}
+        aria-label={expanded ? 'Collapse cheer spots' : 'Expand cheer spots'}
       >
         <Group justify="space-between" align="center" wrap="nowrap">
           <Group gap="xs" wrap="nowrap" style={{ minWidth: 0, flex: 1 }}>
@@ -109,14 +121,14 @@ export function MobileSpectatorTicker({
               aria-label="Toggle cheer spot details"
               style={{ minWidth: 40, minHeight: 40 }}
             >
-              {mobileExpanded ? <IconChevronUp size={18} /> : <IconChevronDown size={18} />}
+              {expanded ? <IconChevronUp size={18} /> : <IconChevronDown size={18} />}
             </ActionIcon>
           </Group>
         </Group>
       </UnstyledButton>
 
       {/* Collapsible Mobile Station List */}
-      <Collapse in={mobileExpanded}>
+      <Collapse in={expanded}>
         <Box pt="xs" mt="xs" style={{ borderTop: '1px solid var(--mantine-color-default-border)' }}>
           <Group justify="space-between" align="center" mb={6}>
             <Text size="11px" fw={700} c="dimmed">

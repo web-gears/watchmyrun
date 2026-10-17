@@ -10,6 +10,8 @@ export interface SpectatorWindowCardProps {
   onClose: () => void;
   onRemoveSpot?: (spotId: string) => void;
   isMobile?: boolean;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
 }
 
 export function SpectatorWindowCard({
@@ -18,6 +20,8 @@ export function SpectatorWindowCard({
   onClose,
   onRemoveSpot,
   isMobile = false,
+  isExpanded,
+  onToggleExpand,
 }: SpectatorWindowCardProps) {
   // Normalize to an array of meeting windows
   const windows =
@@ -35,6 +39,8 @@ export function SpectatorWindowCard({
         windows={windows}
         onClose={onClose}
         onRemoveSpot={onRemoveSpot}
+        isExpanded={isExpanded}
+        onToggleExpand={onToggleExpand}
       />
     );
   }

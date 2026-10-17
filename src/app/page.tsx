@@ -11,7 +11,7 @@ import {
   Button,
   Badge,
 } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
+import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import { IconRun, IconMapPin, IconPlayerPlay, IconTrophy, IconAdjustments } from '@tabler/icons-react';
 import { AppHeader } from '@/components/Header/AppHeader';
 import { MapWrapper } from '@/components/Map/MapWrapper';
@@ -139,6 +139,9 @@ export default function MarathonTrackerPage() {
   const [mobileDrawerOpened, { open: openMobileDrawer, close: closeMobileDrawer }] =
     useDisclosure(false);
   const [desktopDrawerCollapsed, setDesktopDrawerCollapsed] = useState(false);
+  const isMobile = useMediaQuery('(max-width: 48em)');
+  // Mutual auto-collapse state for mobile overlays: only one expanded at a time to preserve map real estate
+  const [mobileExpandedPanel, setMobileExpandedPanel] = useState<'none' | 'top' | 'bottom'>('none');
 
   // 6. Clock & Simulation State (Off by default on clean load)
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
@@ -845,6 +848,10 @@ export default function MarathonTrackerPage() {
                 setIsSimulationMode(false);
                 setIsPlayingSimulation(false);
               }}
+              isExpanded={isMobile ? mobileExpandedPanel === 'bottom' : undefined}
+              onToggleExpand={() =>
+                setMobileExpandedPanel((prev) => (prev === 'bottom' ? 'none' : 'bottom'))
+              }
             />
           ) : (
             <AwaitingRunnerCard
@@ -856,6 +863,10 @@ export default function MarathonTrackerPage() {
               onFinishTimeChange={handleFinishTimeChange}
               onOpenPinModal={() => setIsPinDropActive(true)}
               onStartDemo={handleStartDemo}
+              isExpanded={isMobile ? mobileExpandedPanel === 'bottom' : undefined}
+              onToggleExpand={() =>
+                setMobileExpandedPanel((prev) => (prev === 'bottom' ? 'none' : 'bottom'))
+              }
             />
           )}
         </Box>
@@ -898,6 +909,10 @@ export default function MarathonTrackerPage() {
                 onClose={handleClearAllSpectatorSpots}
                 onRemoveSpot={handleRemoveSpectatorSpot}
                 isMobile
+                isExpanded={mobileExpandedPanel === 'top'}
+                onToggleExpand={() =>
+                  setMobileExpandedPanel((prev) => (prev === 'top' ? 'none' : 'top'))
+                }
               />
             </Box>
           </>

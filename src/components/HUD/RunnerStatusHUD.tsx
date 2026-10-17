@@ -39,6 +39,8 @@ export interface RunnerStatusHUDProps {
   isPlayingSimulation: boolean;
   onTogglePlaySimulation: () => void;
   onResetToLive: () => void;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
 }
 
 export function RunnerStatusHUD({
@@ -55,8 +57,18 @@ export function RunnerStatusHUD({
   isPlayingSimulation,
   onTogglePlaySimulation,
   onResetToLive,
+  isExpanded,
+  onToggleExpand,
 }: RunnerStatusHUDProps) {
-  const [expanded, setExpanded] = useState<boolean>(true);
+  const [internalExpanded, setInternalExpanded] = useState<boolean>(true);
+  const expanded = isExpanded !== undefined ? isExpanded : internalExpanded;
+  const toggleExpanded = () => {
+    if (onToggleExpand) {
+      onToggleExpand();
+    } else {
+      setInternalExpanded(!internalExpanded);
+    }
+  };
 
   const precision = forecast.precision;
   const badgeColor =
@@ -122,7 +134,7 @@ export function RunnerStatusHUD({
           <ActionIcon
             variant="subtle"
             size="md"
-            onClick={() => setExpanded(!expanded)}
+            onClick={toggleExpanded}
             aria-label="Toggle HUD details"
             style={{ minWidth: 40, minHeight: 40 }}
           >

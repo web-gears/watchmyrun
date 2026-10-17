@@ -131,8 +131,8 @@ export function PinDropModal({
 
     const newPin: TrackingPin = {
       id: `pin_${Date.now()}`,
-      lat: clickedCoord.lat,
-      lon: clickedCoord.lon,
+      lat: snapResult.snappedLat,
+      lon: snapResult.snappedLon,
       timestamp: pinDate.toISOString(),
       snappedDistM: snapResult.snappedDistM,
       snappedLat: snapResult.snappedLat,
@@ -169,29 +169,38 @@ export function PinDropModal({
 
         {snapResult ? (
           <Stack gap="xs" p="xs" style={{ background: 'var(--mantine-color-default-hover)', borderRadius: 8 }}>
-            <Group justify="space-between">
+            <Group justify="space-between" align="center">
               <Text size="xs" fw={600} c="dimmed">
-                Snapped to Course:
+                Course Alignment:
               </Text>
-              <Badge color="emerald" variant="light" size="sm">
-                {(snapResult.snappedDistM / 1000).toFixed(2)} km /{' '}
-                {(snapResult.snappedDistM / 1609.344).toFixed(2)} mi
-              </Badge>
+              {snapResult.orthogonalDistanceM <= 25 ? (
+                <Badge color="emerald" variant="light" size="sm">
+                  Exact Match
+                </Badge>
+              ) : snapResult.orthogonalDistanceM <= 300 ? (
+                <Badge color="cyan" variant="light" size="sm">
+                  Auto-snapped ({snapResult.orthogonalDistanceM}m off-course)
+                </Badge>
+              ) : (
+                <Badge color="yellow" variant="light" size="sm">
+                  Projected ({snapResult.orthogonalDistanceM}m away)
+                </Badge>
+              )}
             </Group>
             <Group justify="space-between">
               <Text size="xs" c="dimmed">
-                Elevation:
+                Snapped Course Mile:
               </Text>
-              <Text size="xs" fw={600}>
+              <Text size="xs" fw={700} style={{ fontVariantNumeric: 'tabular-nums' }}>
+                Mile {(snapResult.snappedDistM / 1609.344).toFixed(2)} ({(snapResult.snappedDistM / 1000).toFixed(2)} km)
+              </Text>
+            </Group>
+            <Group justify="space-between">
+              <Text size="xs" c="dimmed">
+                Course Elevation:
+              </Text>
+              <Text size="xs" fw={600} style={{ fontVariantNumeric: 'tabular-nums' }}>
                 {snapResult.snappedEle} m
-              </Text>
-            </Group>
-            <Group justify="space-between">
-              <Text size="xs" c="dimmed">
-                Distance from Course:
-              </Text>
-              <Text size="xs">
-                {snapResult.orthogonalDistanceM} m
               </Text>
             </Group>
 
@@ -203,7 +212,7 @@ export function PinDropModal({
           </Stack>
         ) : (
           <Alert color="red" variant="light">
-            Selected location is too far from the certified marathon course.
+            Selected location could not be aligned with the certified course.
           </Alert>
         )}
 
@@ -237,28 +246,28 @@ export function PinDropModal({
           </Group>
 
           <Group gap="xs" justify="space-between" mt={4} wrap="wrap">
-            <Group gap={4}>
-              <Button size="compact-xs" variant="light" color="cyan" onClick={() => applyPaceMultiplier(0.9)}>
+            <Group gap={6} wrap="wrap">
+              <Button size="xs" variant="light" color="cyan" style={{ minHeight: 34 }} onClick={() => applyPaceMultiplier(0.9)}>
                 ⚡ Fast (-10%)
               </Button>
-              <Button size="compact-xs" variant="light" color="gray" onClick={() => applyPaceMultiplier(1.0)}>
+              <Button size="xs" variant="light" color="gray" style={{ minHeight: 34 }} onClick={() => applyPaceMultiplier(1.0)}>
                 🎯 Target
               </Button>
-              <Button size="compact-xs" variant="light" color="orange" onClick={() => applyPaceMultiplier(1.1)}>
+              <Button size="xs" variant="light" color="orange" style={{ minHeight: 34 }} onClick={() => applyPaceMultiplier(1.1)}>
                 🐢 Slow (+10%)
               </Button>
             </Group>
-            <Group gap={4}>
-              <Button size="compact-xs" variant="default" onClick={() => applyOffsetMinutes(-5)}>
+            <Group gap={6} wrap="wrap">
+              <Button size="xs" variant="default" style={{ minHeight: 34, minWidth: 44 }} onClick={() => applyOffsetMinutes(-5)}>
                 -5m
               </Button>
-              <Button size="compact-xs" variant="default" onClick={() => applyOffsetMinutes(-1)}>
+              <Button size="xs" variant="default" style={{ minHeight: 34, minWidth: 44 }} onClick={() => applyOffsetMinutes(-1)}>
                 -1m
               </Button>
-              <Button size="compact-xs" variant="default" onClick={() => applyOffsetMinutes(1)}>
+              <Button size="xs" variant="default" style={{ minHeight: 34, minWidth: 44 }} onClick={() => applyOffsetMinutes(1)}>
                 +1m
               </Button>
-              <Button size="compact-xs" variant="default" onClick={() => applyOffsetMinutes(5)}>
+              <Button size="xs" variant="default" style={{ minHeight: 34, minWidth: 44 }} onClick={() => applyOffsetMinutes(5)}>
                 +5m
               </Button>
             </Group>

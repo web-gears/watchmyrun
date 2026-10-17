@@ -33,6 +33,8 @@ export interface AwaitingRunnerCardProps {
   onFinishTimeChange: (time: string) => void;
   onOpenPinModal: () => void;
   onStartDemo: () => void;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
 }
 
 export function AwaitingRunnerCard({
@@ -44,9 +46,19 @@ export function AwaitingRunnerCard({
   onFinishTimeChange,
   onOpenPinModal,
   onStartDemo,
+  isExpanded,
+  onToggleExpand,
 }: AwaitingRunnerCardProps) {
   // Foldable state: can be collapsed into a compact glanceable pill or expanded for full setup
-  const [expanded, setExpanded] = useState<boolean>(true);
+  const [internalExpanded, setInternalExpanded] = useState<boolean>(true);
+  const expanded = isExpanded !== undefined ? isExpanded : internalExpanded;
+  const toggleExpanded = () => {
+    if (onToggleExpand) {
+      onToggleExpand();
+    } else {
+      setInternalExpanded(!internalExpanded);
+    }
+  };
 
   return (
     <Card
@@ -65,7 +77,7 @@ export function AwaitingRunnerCard({
       {/* 1. Header Row / Glance Bar with Fold Toggle */}
       <Group justify="space-between" align="center" wrap="nowrap" mb={expanded ? 8 : 0}>
         <UnstyledButton
-          onClick={() => setExpanded(!expanded)}
+          onClick={toggleExpanded}
           style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}
           aria-label={expanded ? 'Fold runner setup card' : 'Expand runner setup card'}
         >
@@ -122,7 +134,7 @@ export function AwaitingRunnerCard({
             variant="subtle"
             color="gray"
             size="md"
-            onClick={() => setExpanded(!expanded)}
+            onClick={toggleExpanded}
             aria-label={expanded ? 'Fold setup details' : 'Expand setup details'}
             style={{ minWidth: 40, minHeight: 40 }}
           >
@@ -221,7 +233,7 @@ export function AwaitingRunnerCard({
             leftSection={<IconMapPin size={14} />}
             onClick={onOpenPinModal}
           >
-            Drop Pin
+            Drop Tracking Pin
           </Button>
 
           <Button
