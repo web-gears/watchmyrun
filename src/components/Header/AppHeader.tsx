@@ -49,7 +49,7 @@ export function AppHeader({
     <>
       <Box
         component="header"
-        px="md"
+        px={{ base: 'xs', sm: 'md' }}
         py="xs"
         className="glass-panel"
         style={{
@@ -60,7 +60,7 @@ export function AppHeader({
       >
         <Group justify="space-between" wrap="nowrap">
           {/* Left: Brand & Mobile Burger */}
-          <Group gap="sm" wrap="nowrap">
+          <Group gap="xs" wrap="nowrap" style={{ flexShrink: 0 }}>
             <Burger
               opened={isMobileDrawerOpen}
               onClick={onOpenMobileDrawer}
@@ -104,10 +104,10 @@ export function AppHeader({
                 </svg>
               </Box>
               <Box>
-                <Text fw={800} size="sm" style={{ lineHeight: 1.1, letterSpacing: '-0.02em' }}>
+                <Text fw={800} size="sm" style={{ lineHeight: 1.1, letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>
                   WatchMy<Text span c="cyan.6">.Run</Text>
                 </Text>
-                <Text size="xs" c="dimmed" style={{ lineHeight: 1.1 }}>
+                <Text size="xs" c="dimmed" visibleFrom="sm" style={{ lineHeight: 1.1 }}>
                   Phone-Free Marathon Tracker
                 </Text>
               </Box>
@@ -115,18 +115,20 @@ export function AppHeader({
           </Group>
 
           {/* Center: Interactive Race Selector Pill */}
-          <Group gap="xs" wrap="nowrap">
+          <Group gap="xs" wrap="nowrap" style={{ flexShrink: 1, minWidth: 0 }}>
             <Button
               variant="light"
               color="cyan"
               size="sm"
               radius="xl"
+              px={{ base: 8, sm: 'sm' }}
               leftSection={<Text size="md">{marathonInfo.flag}</Text>}
               rightSection={<IconChevronDown size={14} />}
               onClick={onOpenRaceModal}
               style={{
                 fontWeight: 600,
                 boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                flexShrink: 0,
               }}
             >
               <Box visibleFrom="sm" component="span">
@@ -145,7 +147,7 @@ export function AppHeader({
           </Group>
 
           {/* Right: Quick Actions, How it Works & Theming */}
-          <Group gap="xs" wrap="nowrap">
+          <Group gap={6} wrap="nowrap" style={{ flexShrink: 0 }}>
             {statusBadgeText && (
               <Badge
                 size="md"
@@ -176,6 +178,7 @@ export function AppHeader({
                 variant="subtle"
                 radius="md"
                 color="cyan"
+                visibleFrom="sm"
                 hiddenFrom="md"
                 onClick={onOpenHowItWorksModal}
                 aria-label="How WatchMy.Run works"

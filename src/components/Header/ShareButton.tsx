@@ -12,9 +12,25 @@ export function ShareButton({ shareUrl }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
 
   const handleShare = async () => {
-    let success = false;
     const url = shareUrl || (typeof window !== 'undefined' ? window.location.href : '');
 
+    // 1. Try native Web Share on mobile devices (iOS / Android)
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      try {
+        await navigator.share({
+          title: 'WatchMy.Run - Phone-Free Marathon Tracker',
+          text: 'Track marathon runner progress and spectator arrival windows live on WatchMy.Run:',
+          url,
+        });
+        return;
+      } catch (err) {
+        // If user cancelled native sheet (AbortError), don't show copy toast
+        if ((err as Error)?.name === 'AbortError') return;
+      }
+    }
+
+    // 2. Clipboard API fallback (desktop & unsupported browsers)
+    let success = false;
     try {
       if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(url);
