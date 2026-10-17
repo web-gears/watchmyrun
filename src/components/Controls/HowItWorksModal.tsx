@@ -254,21 +254,21 @@ export function HowItWorksModal({
           }}
         >
           <Group justify="space-between" align="center" wrap="nowrap">
-            <Group gap="xs" wrap="nowrap">
-              <ThemeIcon size="md" radius="sm" color="pink" variant="light">
+            <Group gap="xs" wrap="nowrap" style={{ minWidth: 0 }}>
+              <ThemeIcon size="md" radius="sm" color="pink" variant="light" style={{ flexShrink: 0 }}>
                 <IconCoffee size={16} />
               </ThemeIcon>
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <Text size="xs" fw={700}>
                   Support WatchMy.Run
                 </Text>
-                <Text size="11px" c="dimmed">
+                <Text size="11px" c="dimmed" visibleFrom="sm">
                   Free and ad-free project. If this helps on race day, you can support development via Ko-fi.
                 </Text>
               </div>
             </Group>
-            <Group gap="xs" wrap="nowrap">
-              <Tooltip label="Check outside running conditions & weather scores at Run-Weather.com" position="top" withArrow>
+            <Group gap="xs" wrap="nowrap" style={{ flexShrink: 0 }}>
+              <Tooltip label="Race weather forecast (Run-Weather.com)" position="top" withArrow>
                 <Button
                   component="a"
                   href="https://run-weather.com/"
@@ -280,17 +280,15 @@ export function HowItWorksModal({
                   radius="md"
                   leftSection={<IconCloud size={14} />}
                   style={{ flexShrink: 0 }}
-                  title="Check outside running conditions & weather scores at Run-Weather.com"
+                  title="Race weather forecast (Run-Weather.com)"
                 >
                   Weather
                 </Button>
               </Tooltip>
               <Tooltip
-                label="Support the project: Help keep WatchMy.Run free & cover map/server hosting costs"
+                label="Support on Ko-fi"
                 position="top"
                 withArrow
-                multiline
-                w={230}
               >
                 <Button
                   component="a"
@@ -303,7 +301,7 @@ export function HowItWorksModal({
                   radius="md"
                   leftSection={<IconCoffee size={14} />}
                   style={{ flexShrink: 0 }}
-                  title="Support the project: Help keep WatchMy.Run free & cover map/server hosting costs"
+                  title="Support on Ko-fi"
                 >
                   Ko-fi
                 </Button>
