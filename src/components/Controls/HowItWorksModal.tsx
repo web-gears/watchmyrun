@@ -334,8 +334,11 @@ export function HowItWorksModal({
           </Button>
         </Group>
 
-        <Text size="11px" c="dimmed" ta="center" mt={2} style={{ opacity: 0.75 }}>
-          Map data © OpenStreetMap & CARTO • © {new Date().getFullYear()} WatchMy.Run
+        <Text size="11px" c="dimmed" ta="center" mt={2} style={{ opacity: 0.85 }}>
+          © {new Date().getFullYear()} WatchMy.Run • Developed by Volodymyr Hartsev
+        </Text>
+        <Text size="10px" c="dimmed" ta="center" mt={1} style={{ opacity: 0.65 }}>
+          Map data © OpenStreetMap & CARTO
         </Text>
       </Stack>
     </Modal>
