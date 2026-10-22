@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Divider, Group, Tooltip, Anchor, Text } from '@mantine/core';
-import { IconCloud, IconCoffee } from '@tabler/icons-react';
+import { IconCloud, IconCoffee, IconRobot } from '@tabler/icons-react';
 import { ThemeToggle } from '@/components/Header/ThemeToggle';
 
 export function DrawerFooter() {
@@ -27,6 +27,22 @@ export function DrawerFooter() {
           >
             <IconCloud size={13} stroke={1.8} />
             Run-Weather.com
+          </Anchor>
+        </Tooltip>
+        <Text size="11px" c="dimmed">
+          •
+        </Text>
+        <Tooltip label="Connect Claude, Cursor or AI via MCP server" position="top" withArrow>
+          <Anchor
+            href="https://watchmyrun-mcp.webgears.workers.dev/"
+            target="_blank"
+            rel="noopener noreferrer"
+            size="11px"
+            c="cyan"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 3, textDecoration: 'none', fontWeight: 500 }}
+          >
+            <IconRobot size={13} stroke={1.8} />
+            AI / MCP Server
           </Anchor>
         </Tooltip>
         <Text size="11px" c="dimmed">

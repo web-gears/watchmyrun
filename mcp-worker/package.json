@@ -1,0 +1,21 @@
+{
+  "name": "watchmyrun-mcp-worker",
+  "version": "1.0.0",
+  "description": "Hosted Model Context Protocol (MCP) server for WatchMy.Run marathon forecasting",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "test": "esbuild test/test-all-tools.ts --bundle --platform=node --outfile=test/out.js && node test/out.js && rm -f test/out.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.1",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261021.1",
+    "typescript": "^5.7.3",
+    "wrangler": "^4.151.3"
+  }
+}

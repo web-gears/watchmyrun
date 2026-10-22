@@ -1024,6 +1024,8 @@ export default function MarathonTrackerPage() {
         onClose={() => setHowItWorksModalOpen(false)}
         onSelectRace={() => setRaceModalOpen(true)}
         selectedMarathonName={marathonInfo.name}
+        startTimeStr={startTimeStr}
+        finishTimeStr={finishTimeStr}
       />
 
       {/* 5. Pin Drop Calibration Modal */}

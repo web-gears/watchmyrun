@@ -14,6 +14,9 @@ import {
   ThemeIcon,
   Timeline,
   Tooltip,
+  CopyButton,
+  Code,
+  Anchor,
 } from '@mantine/core';
 import {
   IconDeviceMobileOff,
@@ -28,6 +31,10 @@ import {
   IconTrophy,
   IconCoffee,
   IconCloud,
+  IconRobot,
+  IconCopy,
+  IconBrandOpenai,
+  IconExternalLink,
 } from '@tabler/icons-react';
 
 interface HowItWorksModalProps {
@@ -35,6 +42,8 @@ interface HowItWorksModalProps {
   onClose: () => void;
   onSelectRace?: () => void;
   selectedMarathonName?: string;
+  startTimeStr?: string;
+  finishTimeStr?: string;
 }
 
 export function HowItWorksModal({
@@ -42,7 +51,22 @@ export function HowItWorksModal({
   onClose,
   onSelectRace,
   selectedMarathonName,
+  startTimeStr,
+  finishTimeStr,
 }: HowItWorksModalProps) {
+  const promptText = `I am tracking a runner in the ${selectedMarathonName || 'marathon'} who started at ${startTimeStr || '09:10'} with a goal finish of ${finishTimeStr || '03:45:00'}. Using WatchMy.Run, tell me where they are right now on the course, what time they will pass my cheer spot, and what their projected finish time is.`;
+
+  const mcpConfigJson = JSON.stringify(
+    {
+      mcpServers: {
+        watchmyrun: {
+          url: 'https://watchmyrun-mcp.webgears.workers.dev/mcp',
+        },
+      },
+    },
+    null,
+    2
+  );
   return (
     <Modal
       opened={opened}
@@ -243,6 +267,111 @@ export function HowItWorksModal({
             </Group>
           </Card>
         )}
+
+        {/* Track with AI Assistant Card (ChatGPT & MCP) */}
+        <Card
+          radius="md"
+          p="sm"
+          style={{
+            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(56, 189, 248, 0.05) 100%)',
+            border: '1px solid rgba(16, 185, 129, 0.25)',
+          }}
+        >
+          <Group justify="space-between" align="flex-start" wrap="nowrap" mb={8}>
+            <Group gap="xs" wrap="nowrap" align="center">
+              <ThemeIcon
+                size="md"
+                radius="sm"
+                variant="gradient"
+                gradient={{ from: 'teal', to: 'cyan' }}
+                style={{ flexShrink: 0 }}
+              >
+                <IconRobot size={18} />
+              </ThemeIcon>
+              <div>
+                <Group gap={6} align="center">
+                  <Text fw={700} size="xs" style={{ letterSpacing: '-0.01em' }}>
+                    Prefer Asking AI on Race Day?
+                  </Text>
+                  <Badge size="xs" variant="light" color="teal">
+                    ChatGPT & MCP
+                  </Badge>
+                </Group>
+                <Text size="11px" c="dimmed" mt={1}>
+                  In noisy cheering crowds, ask ChatGPT or Claude hands-free instead of tapping around the map.
+                </Text>
+              </div>
+            </Group>
+          </Group>
+
+          {/* Sample Prompt Box */}
+          <Box
+            p="xs"
+            mb={8}
+            style={{
+              background: 'var(--mantine-color-body)',
+              borderRadius: 8,
+              border: '1px solid var(--mantine-color-default-border)',
+            }}
+          >
+            <Text size="10px" fw={700} c="dimmed" mb={4} style={{ textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Pre-filled prompt with your runner&apos;s race settings
+            </Text>
+            <Text size="xs" c="dimmed" style={{ fontStyle: 'italic', lineHeight: 1.35 }}>
+              &ldquo;{promptText}&rdquo;
+            </Text>
+            <Group justify="flex-start" align="center" mt={8} wrap="wrap" gap={8}>
+              <Button
+                component="a"
+                href={`https://chatgpt.com/?q=${encodeURIComponent(promptText)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                color="teal"
+                variant="filled"
+                size="xs"
+                radius="md"
+                leftSection={<IconBrandOpenai size={15} />}
+                rightSection={<IconExternalLink size={12} />}
+                style={{ fontWeight: 600 }}
+              >
+                Open in ChatGPT
+              </Button>
+
+              <CopyButton value={promptText} timeout={2000}>
+                {({ copied, copy }) => (
+                  <Button
+                    color={copied ? 'teal' : 'gray'}
+                    variant="light"
+                    size="xs"
+                    radius="md"
+                    leftSection={copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
+                    onClick={copy}
+                  >
+                    {copied ? 'Prompt Copied!' : 'Copy Prompt'}
+                  </Button>
+                )}
+              </CopyButton>
+            </Group>
+          </Box>
+
+          {/* Power users link */}
+          <Group justify="space-between" align="center" wrap="wrap" gap="xs">
+            <Text size="11px" c="dimmed">
+              Claude Desktop, Cursor, or Custom GPT developer?
+            </Text>
+            <Anchor
+              href="https://watchmyrun-mcp.webgears.workers.dev/"
+              target="_blank"
+              rel="noopener noreferrer"
+              size="xs"
+              c="cyan"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 600, textDecoration: 'none' }}
+            >
+              View MCP & OpenAPI Server Docs
+              <IconExternalLink size={12} />
+            </Anchor>
+          </Group>
+        </Card>
 
         {/* Support the developer */}
         <Box
