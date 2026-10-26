@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import {
   executeListMarathons,
+  executeSearchRaceCourses,
   executeGetCourseLandmarks,
   executeCalculateForecast,
   executeGetCheerWindows,
@@ -16,6 +17,7 @@ const MarathonEnum = z.enum([
   'london',
   'berlin',
   'tokyo',
+  'custom',
 ]);
 
 const StrategyEnum = z.enum(['flat', 'fatigue', 'negative']);
@@ -42,7 +44,7 @@ const CheerLocationSchema = z.object({
 export function createWatchMyRunMcpServer(baseUrl = 'https://watchmy.run'): McpServer {
   const server = new McpServer({
     name: 'WatchMyRun Marathon Forecaster',
-    version: '1.0.0',
+    version: '1.1.0',
   });
 
   // TOOL 1: list_marathons
@@ -60,27 +62,53 @@ export function createWatchMyRunMcpServer(baseUrl = 'https://watchmy.run'): McpS
     }
   );
 
-  // TOOL 2: get_course_landmarks
+  // TOOL 2: search_race_courses
   server.tool(
-    'get_course_landmarks',
-    'Retrieves official cheer presets, timing split mats, mile markers, and elevation profile summary along a marathon course.',
+    'search_race_courses',
+    'Searches public running courses, marathons, and trail routes by name or city across verified race catalogs, RideWithGPS, OpenStreetMap, and Waymarked Trails. Returns routeUrl values that can be passed directly as courseUrl into forecast, cheer windows, pin, and URL tools.',
     {
-      marathon: MarathonEnum.describe('The marathon ID (e.g. "new_york", "boston")'),
+      query: z.string().describe('Race name, city, or trail keyword (e.g. "Marine Corps", "Valencia", "Madeira", "Big Sur")'),
     },
-    async ({ marathon }) => {
-      const result = executeGetCourseLandmarks(marathon);
+    async ({ query }) => {
+      const result = await executeSearchRaceCourses(query);
       return {
         content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
       };
     }
   );
 
-  // TOOL 3: calculate_runner_forecast
+  // TOOL 3: get_course_landmarks
+  server.tool(
+    'get_course_landmarks',
+    'Retrieves official cheer presets, timing split mats, mile markers, and elevation profile summary along a marathon or custom running course.',
+    {
+      marathon: MarathonEnum.optional().describe('The marathon ID (e.g. "new_york", "boston", or "custom")'),
+      courseUrl: z.string().optional().describe('Optional custom course link (RideWithGPS route URL, OpenStreetMap relation osm-relation://ID, Waymarked Trails URL, or direct .gpx / .tcx / .geojson URL)'),
+      courseContent: z.string().optional().describe('Optional raw GPX, TCX, or GeoJSON text content for a custom course'),
+      courseTitle: z.string().optional().describe('Optional custom title for the imported course'),
+    },
+    async ({ marathon, courseUrl, courseContent, courseTitle }) => {
+      const result = await executeGetCourseLandmarks({
+        marathon,
+        courseUrl,
+        courseContent,
+        courseTitle,
+      });
+      return {
+        content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+      };
+    }
+  );
+
+  // TOOL 4: calculate_runner_forecast
   server.tool(
     'calculate_runner_forecast',
-    'Computes real-time runner position, elapsed time, current pace, distance covered, progress percentage, upcoming timing splits, and projected finish time.',
+    'Computes real-time runner position, elapsed time, current pace, distance covered, progress percentage, upcoming timing splits, and projected finish time for any World Marathon Major or custom course.',
     {
-      marathon: MarathonEnum.describe('Marathon ID'),
+      marathon: MarathonEnum.optional().describe('Marathon ID (defaults to "custom" when courseUrl or courseContent is provided)'),
+      courseUrl: z.string().optional().describe('Optional custom course link (RideWithGPS route URL, OpenStreetMap relation osm-relation://ID, Waymarked Trails URL, or direct .gpx / .tcx / .geojson URL)'),
+      courseContent: z.string().optional().describe('Optional raw GPX, TCX, or GeoJSON text content for a custom course'),
+      courseTitle: z.string().optional().describe('Optional custom course name'),
       startTime: z.string().describe("Wave or runner start time in 'HH:mm' or 'HH:mm:ss' (e.g. '09:10')"),
       targetFinishTime: z.string().optional().describe("Target finish time in 'HH:mm:ss' (e.g. '03:45:00')"),
       targetPace: z.string().optional().describe("Target pace in 'mm:ss' (e.g. '05:20')"),
@@ -91,6 +119,9 @@ export function createWatchMyRunMcpServer(baseUrl = 'https://watchmy.run'): McpS
     },
     async ({
       marathon,
+      courseUrl,
+      courseContent,
+      courseTitle,
       startTime,
       targetFinishTime,
       targetPace,
@@ -99,8 +130,11 @@ export function createWatchMyRunMcpServer(baseUrl = 'https://watchmy.run'): McpS
       queryTime,
       pins,
     }) => {
-      const result = executeCalculateForecast({
+      const result = await executeCalculateForecast({
         marathon,
+        courseUrl,
+        courseContent,
+        courseTitle,
         startTime,
         targetFinishTime,
         targetPace,
@@ -116,12 +150,15 @@ export function createWatchMyRunMcpServer(baseUrl = 'https://watchmy.run'): McpS
     }
   );
 
-  // TOOL 4: get_cheer_spot_windows
+  // TOOL 5: get_cheer_spot_windows
   server.tool(
     'get_cheer_spot_windows',
-    'Computes spectator meeting arrival windows (expected arrival, early arrival, late arrival) for cheer spots along the course.',
+    'Computes spectator meeting arrival windows (expected arrival, early arrival, late arrival) for cheer spots along a World Marathon Major or custom course.',
     {
-      marathon: MarathonEnum.describe('Marathon ID'),
+      marathon: MarathonEnum.optional().describe('Marathon ID (defaults to "custom" when courseUrl or courseContent is provided)'),
+      courseUrl: z.string().optional().describe('Optional custom course link (RideWithGPS route URL, OpenStreetMap relation osm-relation://ID, Waymarked Trails URL, or direct .gpx / .tcx / .geojson URL)'),
+      courseContent: z.string().optional().describe('Optional raw GPX, TCX, or GeoJSON text content for a custom course'),
+      courseTitle: z.string().optional().describe('Optional custom course name'),
       startTime: z.string().describe("Wave or runner start time ('HH:mm')"),
       targetFinishTime: z.string().optional().describe("Target finish time ('HH:mm:ss')"),
       targetPace: z.string().optional().describe("Target pace ('mm:ss')"),
@@ -133,6 +170,9 @@ export function createWatchMyRunMcpServer(baseUrl = 'https://watchmy.run'): McpS
     },
     async ({
       marathon,
+      courseUrl,
+      courseContent,
+      courseTitle,
       startTime,
       targetFinishTime,
       targetPace,
@@ -142,8 +182,11 @@ export function createWatchMyRunMcpServer(baseUrl = 'https://watchmy.run'): McpS
       pins,
       queryTime,
     }) => {
-      const result = executeGetCheerWindows({
+      const result = await executeGetCheerWindows({
         marathon,
+        courseUrl,
+        courseContent,
+        courseTitle,
         startTime,
         targetFinishTime,
         targetPace,
@@ -160,12 +203,15 @@ export function createWatchMyRunMcpServer(baseUrl = 'https://watchmy.run'): McpS
     }
   );
 
-  // TOOL 5: add_tracking_pin
+  // TOOL 6: add_tracking_pin
   server.tool(
     'add_tracking_pin',
-    'Snaps an AirTag or visual sighting coordinate to the official marathon route, calculates pace delta, and updates projected finish time.',
+    'Snaps an AirTag or visual sighting coordinate to a World Marathon Major or custom route, calculates pace delta, and updates projected finish time.',
     {
-      marathon: MarathonEnum.describe('Marathon ID'),
+      marathon: MarathonEnum.optional().describe('Marathon ID (defaults to "custom" when courseUrl or courseContent is provided)'),
+      courseUrl: z.string().optional().describe('Optional custom course link (RideWithGPS route URL, OpenStreetMap relation osm-relation://ID, Waymarked Trails URL, or direct .gpx / .tcx / .geojson URL)'),
+      courseContent: z.string().optional().describe('Optional raw GPX, TCX, or GeoJSON text content for a custom course'),
+      courseTitle: z.string().optional().describe('Optional custom course name'),
       lat: z.number().describe('Latitude of sighting'),
       lon: z.number().describe('Longitude of sighting'),
       timestamp: z.string().describe("Time of sighting ('HH:mm:ss' or ISO)"),
@@ -178,6 +224,9 @@ export function createWatchMyRunMcpServer(baseUrl = 'https://watchmy.run'): McpS
     },
     async ({
       marathon,
+      courseUrl,
+      courseContent,
+      courseTitle,
       lat,
       lon,
       timestamp,
@@ -188,8 +237,11 @@ export function createWatchMyRunMcpServer(baseUrl = 'https://watchmy.run'): McpS
       strategy,
       existingPins,
     }) => {
-      const result = executeAddTrackingPin({
+      const result = await executeAddTrackingPin({
         marathon,
+        courseUrl,
+        courseContent,
+        courseTitle,
         lat,
         lon,
         timestamp,
@@ -207,12 +259,14 @@ export function createWatchMyRunMcpServer(baseUrl = 'https://watchmy.run'): McpS
     }
   );
 
-  // TOOL 6: generate_race_url
+  // TOOL 7: generate_race_url
   server.tool(
     'generate_race_url',
-    'Converts race parameters, pins, and spectator meeting spots into a clickable WatchMy.Run web URL.',
+    'Converts race parameters, custom course link, pins, and spectator meeting spots into a clickable WatchMy.Run web URL.',
     {
-      marathon: MarathonEnum.describe('Marathon ID'),
+      marathon: MarathonEnum.optional().describe('Marathon ID (defaults to "custom" when courseUrl is provided)'),
+      courseUrl: z.string().optional().describe('Optional custom course link (RideWithGPS, OpenStreetMap relation, Waymarked Trails, or direct .gpx / .geojson URL) to embed in the shareable WatchMy.Run link'),
+      courseTitle: z.string().optional().describe('Optional custom course title'),
       startTime: z.string().optional().describe("Wave start time ('HH:mm')"),
       targetFinishTime: z.string().optional().describe("Target finish time ('HH:mm:ss')"),
       targetPace: z.string().optional().describe("Target pace ('mm:ss')"),
@@ -223,6 +277,8 @@ export function createWatchMyRunMcpServer(baseUrl = 'https://watchmy.run'): McpS
     },
     async ({
       marathon,
+      courseUrl,
+      courseTitle,
       startTime,
       targetFinishTime,
       targetPace,
@@ -231,8 +287,10 @@ export function createWatchMyRunMcpServer(baseUrl = 'https://watchmy.run'): McpS
       spectatorMiles,
       customBaseUrl,
     }) => {
-      const result = executeGenerateRaceUrl({
+      const result = await executeGenerateRaceUrl({
         marathon,
+        courseUrl,
+        courseTitle,
         startTime,
         targetFinishTime,
         targetPace,

@@ -84,7 +84,7 @@ async function runTests() {
   const toolsListRes = await sendMcpRequest('tools/list', {}, 2);
   const toolNames = toolsListRes.result.tools.map((t: { name: string }) => t.name);
   console.log('   Registered tools (' + toolNames.length + '):', toolNames.join(', '));
-  if (toolNames.length !== 6) throw new Error(`Expected 6 tools, found ${toolNames.length}`);
+  if (toolNames.length !== 7) throw new Error(`Expected 7 tools, found ${toolNames.length}`);
 
   // Test 5: Tool 1 - list_marathons
   console.log('\n5️⃣ Testing tool: list_marathons');
@@ -208,7 +208,37 @@ async function runTests() {
   console.log('   Generated URL:', urlData.url);
   console.log('   Markdown Link:', urlData.markdownLink);
 
-  console.log('\n🎉 ALL 10 TESTS PASSED SUCCESSFULLY! The MCP server is 100% verified and operational.');
+  // Test 11: Custom course forecast with GPX content & courseUrl
+  console.log('\n1️⃣1️⃣ Testing custom course forecast in calculate_runner_forecast');
+  const sampleGpx = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1"><trk><name>Madeira Sky Race</name><trkseg>
+<trkpt lat="32.7607" lon="-16.9595"><ele>150</ele></trkpt>
+<trkpt lat="32.7850" lon="-16.9200"><ele>620</ele></trkpt>
+<trkpt lat="32.8120" lon="-16.8850"><ele>1100</ele></trkpt>
+</trkseg></trk></gpx>`;
+  const customForecastRes = await sendMcpRequest(
+    'tools/call',
+    {
+      name: 'calculate_runner_forecast',
+      arguments: {
+        courseContent: sampleGpx,
+        courseUrl: 'osm-relation://2445782',
+        courseTitle: 'Madeira Sky Race',
+        startTime: '08:00',
+        targetFinishTime: '01:30:00',
+        queryTime: '08:45:00',
+      },
+    },
+    9
+  );
+  const customForecastData = JSON.parse(customForecastRes.result.content[0].text);
+  console.log('   Custom Course:', customForecastData.marathon, '| Total Km:', customForecastData.totalDistanceKm);
+  console.log('   Custom Course Web URL:', customForecastData.webTrackingUrl);
+  if (!customForecastData.webTrackingUrl.includes('race=custom')) {
+    throw new Error('Custom course URL missing race=custom parameter');
+  }
+
+  console.log('\n🎉 ALL 11 TESTS PASSED SUCCESSFULLY! The MCP server is 100% verified and operational.');
 }
 
 runTests().catch((err) => {

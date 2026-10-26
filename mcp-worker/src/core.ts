@@ -1,4 +1,5 @@
 import { MARATHON_REGISTRY } from '../../src/lib/data/marathonRegistry';
+import { CURATED_POPULAR_RACES, RaceSearchResult } from '../../src/lib/data/raceAggregatorSearch';
 import { forecastRunner, calculateAllSpectatorWindows } from '../../src/lib/forecasting/forecastEngine';
 import { snapCoordinateToCourse } from '../../src/lib/forecasting/snapToCourse';
 import { calculatePinCalibration, formatPace } from '../../src/lib/forecasting/pacingModels';
@@ -13,6 +14,7 @@ import {
   VALID_MARATHON_IDS,
   getCourseData,
   getMarathonInfo,
+  resolveCourseAndInfo,
   resolveDateTime,
   parseFinishTimeToSeconds,
   convertPaceToFinishSeconds,
@@ -82,13 +84,167 @@ export function executeListMarathons(marathonId?: MarathonId) {
   return { marathons };
 }
 
-export function executeGetCourseLandmarks(marathon: MarathonId) {
-  const info = getMarathonInfo(marathon);
-  const course = getCourseData(marathon);
+export async function executeSearchRaceCourses(query: string) {
+  const q = query.trim();
+  if (!q) {
+    return {
+      query: '',
+      results: CURATED_POPULAR_RACES,
+    };
+  }
+
+  const lower = q.toLowerCase();
+  const curatedMatches = CURATED_POPULAR_RACES.filter(
+    (r) => r.title.toLowerCase().includes(lower) || r.subtitle.toLowerCase().includes(lower)
+  );
+
+  const results: RaceSearchResult[] = [...curatedMatches];
+  const seenTitles = new Set<string>(results.map((r) => r.title.toLowerCase()));
+
+  const addResult = (item: RaceSearchResult) => {
+    const key = item.title.toLowerCase().trim();
+    if (!seenTitles.has(key)) {
+      seenTitles.add(key);
+      results.push(item);
+    }
+  };
+
+  // 1. Search RideWithGPS public routes via DuckDuckGo HTML
+  try {
+    const ddgUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(
+      `site:ridewithgps.com/routes ${q}`
+    )}`;
+    const ddgRes = await fetch(ddgUrl, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        Accept: 'text/html',
+      },
+    });
+    if (ddgRes.ok) {
+      const html = await ddgRes.text();
+      const linkRegex = /<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
+      let match: RegExpExecArray | null;
+      const seenIds = new Set<string>();
+      while ((match = linkRegex.exec(html)) !== null) {
+        const rawHref = decodeURIComponent(match[1]);
+        const rwgIdMatch = rawHref.match(/ridewithgps\.com\/routes\/(\d+)/i);
+        if (rwgIdMatch && !seenIds.has(rwgIdMatch[1])) {
+          const routeId = rwgIdMatch[1];
+          seenIds.add(routeId);
+          const cleanTitle = match[2]
+            .replace(/<[^>]+>/g, '')
+            .replace(/\s*\|\s*Ride with GPS.*$/i, '')
+            .replace(/\s*-\s*Ride with GPS.*$/i, '')
+            .trim();
+          addResult({
+            id: `rwg_${routeId}`,
+            title: cleanTitle || `RideWithGPS Route #${routeId}`,
+            subtitle: `RideWithGPS Route #${routeId}`,
+            source: 'ridewithgps',
+            sourceLabel: 'RideWithGPS',
+            routeUrl: `https://ridewithgps.com/routes/${routeId}`,
+            externalUrl: `https://ridewithgps.com/routes/${routeId}`,
+          });
+        }
+      }
+    }
+  } catch {
+    // Continue if DDG search fails
+  }
+
+  // 2. Search OpenStreetMap Overpass API for running/foot relations
+  try {
+    const safeQuery = q.replace(/[.*+?^${}()|[\]\\"]/g, ' ').trim();
+    if (safeQuery.length >= 2) {
+      const overpassQl = `[out:json][timeout:10];(relation["route"~"running|foot|fitness_trail"]["name"~"${safeQuery}",i];);out tags center 10;`;
+      const osmRes = await fetch(
+        `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQl)}`,
+        {
+          headers: {
+            'User-Agent': 'WatchMyRun/1.3 (+https://watchmy.run)',
+            Accept: 'application/json',
+          },
+        }
+      );
+      if (osmRes.ok) {
+        const osmData = (await osmRes.json()) as any;
+        if (Array.isArray(osmData.elements)) {
+          for (const el of osmData.elements) {
+            if (el.type === 'relation' && el.tags?.name) {
+              const name = el.tags['name:en'] || el.tags.name;
+              const loc =
+                el.tags['addr:city'] || el.tags.network || el.tags.operator || 'Running Course';
+              addResult({
+                id: `osm_${el.id}`,
+                title: name,
+                subtitle: `${loc} (OSM #${el.id})`,
+                source: 'osm',
+                sourceLabel: 'OpenStreetMap',
+                routeUrl: `osm-relation://${el.id}`,
+                externalUrl: `https://www.openstreetmap.org/relation/${el.id}`,
+              });
+            }
+          }
+        }
+      }
+    }
+  } catch {
+    // Continue if OSM search fails
+  }
+
+  // 3. Search Waymarked Trails API (all route IDs are OpenStreetMap relation IDs)
+  try {
+    const wmtUrl = `https://hiking.waymarkedtrails.org/api/v1/list/search?query=${encodeURIComponent(
+      q
+    )}&limit=8`;
+    const wmtRes = await fetch(wmtUrl, {
+      headers: {
+        'User-Agent': 'WatchMyRun/1.3 (+https://watchmy.run)',
+        Accept: 'application/json',
+      },
+    });
+    if (wmtRes.ok) {
+      const wmtData = (await wmtRes.json()) as any;
+      if (Array.isArray(wmtData.results)) {
+        for (const item of wmtData.results) {
+          if (item.id && item.name) {
+            addResult({
+              id: `wmt_${item.id}`,
+              title: item.name,
+              subtitle: `${item.group || item.ref || 'Mapped Route'} (OSM #${item.id})`,
+              source: 'waymarked',
+              sourceLabel: 'Waymarked Trails',
+              routeUrl: `osm-relation://${item.id}`,
+              externalUrl: `https://hiking.waymarkedtrails.org/#route?id=${item.id}`,
+            });
+          }
+        }
+      }
+    }
+  } catch {
+    // Continue if WMT search fails
+  }
+
+  return {
+    query: q,
+    results: results.slice(0, 20),
+  };
+}
+
+export async function executeGetCourseLandmarks(params: {
+  marathon?: MarathonId;
+  courseUrl?: string;
+  courseContent?: string;
+  courseTitle?: string;
+}) {
+  const { course, info } = await resolveCourseAndInfo(params);
 
   return {
     marathon: info.name,
     distanceM: course.distanceM,
+    distanceKm: Number((course.distanceM / 1000).toFixed(2)),
+    distanceMi: Number((course.distanceM / 1609.344).toFixed(2)),
     cheerPresets: info.cheerPresets,
     timingMats: course.timingMats.map((mat) => ({
       name: mat.name,
@@ -103,8 +259,11 @@ export function executeGetCourseLandmarks(marathon: MarathonId) {
   };
 }
 
-export function executeCalculateForecast(params: {
-  marathon: MarathonId;
+export async function executeCalculateForecast(params: {
+  marathon?: MarathonId;
+  courseUrl?: string;
+  courseContent?: string;
+  courseTitle?: string;
   startTime: string;
   targetFinishTime?: string;
   targetPace?: string;
@@ -116,6 +275,9 @@ export function executeCalculateForecast(params: {
 }) {
   const {
     marathon,
+    courseUrl,
+    courseContent,
+    courseTitle,
     startTime,
     targetFinishTime,
     targetPace,
@@ -126,8 +288,12 @@ export function executeCalculateForecast(params: {
     baseUrl = 'https://watchmy.run',
   } = params;
 
-  const course = getCourseData(marathon);
-  const info = getMarathonInfo(marathon);
+  const { course, info, marathonId, trackUrl, trackTitle } = await resolveCourseAndInfo({
+    marathon,
+    courseUrl,
+    courseContent,
+    courseTitle,
+  });
 
   let finishSeconds: number;
   if (targetFinishTime) {
@@ -170,7 +336,9 @@ export function executeCalculateForecast(params: {
 
   const webUrl = buildRaceUrl(
     {
-      marathon,
+      marathon: marathonId,
+      trackUrl,
+      trackTitle,
       startTime,
       finishTime: formatSecondsToHms(finishSeconds),
       strategy: strategy as PacingStrategy,
@@ -206,8 +374,11 @@ export function executeCalculateForecast(params: {
   };
 }
 
-export function executeGetCheerWindows(params: {
-  marathon: MarathonId;
+export async function executeGetCheerWindows(params: {
+  marathon?: MarathonId;
+  courseUrl?: string;
+  courseContent?: string;
+  courseTitle?: string;
   startTime: string;
   targetFinishTime?: string;
   targetPace?: string;
@@ -220,6 +391,9 @@ export function executeGetCheerWindows(params: {
 }) {
   const {
     marathon,
+    courseUrl,
+    courseContent,
+    courseTitle,
     startTime,
     targetFinishTime,
     targetPace,
@@ -231,8 +405,12 @@ export function executeGetCheerWindows(params: {
     baseUrl = 'https://watchmy.run',
   } = params;
 
-  const course = getCourseData(marathon);
-  const info = getMarathonInfo(marathon);
+  const { course, info, marathonId, trackUrl, trackTitle } = await resolveCourseAndInfo({
+    marathon,
+    courseUrl,
+    courseContent,
+    courseTitle,
+  });
 
   let finishSeconds: number;
   if (targetFinishTime) {
@@ -279,7 +457,7 @@ export function executeGetCheerWindows(params: {
     let description: string | undefined;
 
     if (loc.presetId) {
-      const preset = info.cheerPresets.find((cp) => cp.id === loc.presetId);
+      const preset = info.cheerPresets.find((cp: { id: string }) => cp.id === loc.presetId);
       if (preset) {
         distM = preset.distM;
         name = preset.name;
@@ -317,7 +495,9 @@ export function executeGetCheerWindows(params: {
 
   const webUrl = buildRaceUrl(
     {
-      marathon,
+      marathon: marathonId,
+      trackUrl,
+      trackTitle,
       startTime,
       finishTime: formatSecondsToHms(finishSeconds),
       strategy: strategy as PacingStrategy,
@@ -349,8 +529,11 @@ export function executeGetCheerWindows(params: {
   };
 }
 
-export function executeAddTrackingPin(params: {
-  marathon: MarathonId;
+export async function executeAddTrackingPin(params: {
+  marathon?: MarathonId;
+  courseUrl?: string;
+  courseContent?: string;
+  courseTitle?: string;
   lat: number;
   lon: number;
   timestamp: string;
@@ -364,6 +547,9 @@ export function executeAddTrackingPin(params: {
 }) {
   const {
     marathon,
+    courseUrl,
+    courseContent,
+    courseTitle,
     lat,
     lon,
     timestamp,
@@ -376,8 +562,12 @@ export function executeAddTrackingPin(params: {
     baseUrl = 'https://watchmy.run',
   } = params;
 
-  const course = getCourseData(marathon);
-  const info = getMarathonInfo(marathon);
+  const { course, info, marathonId, trackUrl, trackTitle } = await resolveCourseAndInfo({
+    marathon,
+    courseUrl,
+    courseContent,
+    courseTitle,
+  });
 
   let finishSeconds: number;
   if (targetFinishTime) {
@@ -441,7 +631,9 @@ export function executeAddTrackingPin(params: {
 
   const webUrl = buildRaceUrl(
     {
-      marathon,
+      marathon: marathonId,
+      trackUrl,
+      trackTitle,
       startTime,
       finishTime: formatSecondsToHms(finishSeconds),
       strategy: strategy as PacingStrategy,
@@ -484,8 +676,11 @@ export function executeAddTrackingPin(params: {
   };
 }
 
-export function executeGenerateRaceUrl(params: {
-  marathon: MarathonId;
+export async function executeGenerateRaceUrl(params: {
+  marathon?: MarathonId;
+  courseUrl?: string;
+  courseContent?: string;
+  courseTitle?: string;
   startTime?: string;
   targetFinishTime?: string;
   targetPace?: string;
@@ -496,6 +691,9 @@ export function executeGenerateRaceUrl(params: {
 }) {
   const {
     marathon,
+    courseUrl,
+    courseContent,
+    courseTitle,
     startTime,
     targetFinishTime,
     targetPace,
@@ -505,7 +703,12 @@ export function executeGenerateRaceUrl(params: {
     customBaseUrl = 'https://watchmy.run',
   } = params;
 
-  const course = getCourseData(marathon);
+  const { course, marathonId, trackUrl, trackTitle } = await resolveCourseAndInfo({
+    marathon,
+    courseUrl,
+    courseContent,
+    courseTitle,
+  });
 
   const snappedPins: TrackingPin[] = pins.map((p, idx) => {
     const snap = snapCoordinateToCourse(p.lat, p.lon, course.points);
@@ -525,7 +728,9 @@ export function executeGenerateRaceUrl(params: {
 
   const url = buildRaceUrl(
     {
-      marathon,
+      marathon: marathonId,
+      trackUrl,
+      trackTitle,
       startTime,
       finishTime: targetFinishTime,
       pace: targetPace,

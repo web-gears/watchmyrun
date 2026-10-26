@@ -5,12 +5,13 @@ import { haversineDistance, interpolateAtDistance } from '../forecasting/geodesy
  * Parses raw GPX or TCX XML string into a fully typed WatchMy.Run CourseData object.
  */
 export function parseGpxToCourseData(gpxText: string, defaultTitle = 'Custom Course'): CourseData {
-  let doc: Document;
-  if (typeof window !== 'undefined' && typeof window.DOMParser !== 'undefined') {
-    const parser = new window.DOMParser();
+  const win = (globalThis as any).window;
+  let doc: any;
+  if (typeof win !== 'undefined' && typeof win.DOMParser !== 'undefined') {
+    const parser = new win.DOMParser();
     doc = parser.parseFromString(gpxText, 'application/xml');
   } else {
-    // Node.js test environment fallback using basic regex / simple XML parser
+    // Non-browser environment (Cloudflare Workers / Node.js) fallback
     return parseGpxSimpleRegex(gpxText, defaultTitle);
   }
 
@@ -28,7 +29,7 @@ export function parseGpxToCourseData(gpxText: string, defaultTitle = 'Custom Cou
   const rawCoords: { lat: number; lon: number; ele: number }[] = [];
 
   // 2a. Extract GPX Track Points (<trkpt>, <rtept>, or fallback to <wpt>)
-  let ptNodes = Array.from(doc.querySelectorAll('trkpt'));
+  let ptNodes: any[] = Array.from(doc.querySelectorAll('trkpt'));
   if (ptNodes.length === 0) {
     ptNodes = Array.from(doc.querySelectorAll('rtept'));
   }
@@ -53,7 +54,7 @@ export function parseGpxToCourseData(gpxText: string, defaultTitle = 'Custom Cou
     }
   } else {
     // 2b. Check for Garmin TCX <Trackpoint> elements
-    const tcxNodes = Array.from(doc.querySelectorAll('Trackpoint'));
+    const tcxNodes: any[] = Array.from(doc.querySelectorAll('Trackpoint'));
     for (const node of tcxNodes) {
       const latElem = node.querySelector('Position > LatitudeDegrees');
       const lonElem = node.querySelector('Position > LongitudeDegrees');
@@ -75,9 +76,9 @@ export function parseGpxToCourseData(gpxText: string, defaultTitle = 'Custom Cou
   }
 
   // 3. Extract Waypoints as Potential Landmarks / Cheer Presets
-  const wptNodes = Array.from(doc.querySelectorAll('gpx > wpt'));
+  const wptNodes: any[] = Array.from(doc.querySelectorAll('gpx > wpt'));
   const waypoints = wptNodes
-    .map((wpt) => {
+    .map((wpt: any) => {
       const lat = parseFloat(wpt.getAttribute('lat') || '0');
       const lon = parseFloat(wpt.getAttribute('lon') || '0');
       const name = wpt.querySelector('name')?.textContent?.trim() || 'Waypoint';
@@ -513,6 +514,7 @@ function downsampleCoords(
 export function normalizeTrackUrl(inputUrl: string): {
   normalizedUrl: string;
   sourceType: 'ridewithgps' | 'rungo' | 'osm' | 'waymarked' | 'direct';
+  osmRelationId?: string;
 } {
   const url = inputUrl.trim();
 
@@ -520,20 +522,24 @@ export function normalizeTrackUrl(inputUrl: string): {
   const osmMatch = url.match(/(?:osm-relation:\/\/|openstreetmap\.org\/relation\/)(\d+)/i);
   if (osmMatch) {
     const relId = osmMatch[1];
-    const query = `[out:json][timeout:20];relation(${relId});out geom;`;
+    const query = `[out:json][timeout:25];rel(${relId});(._;rel(r););out geom;`;
     return {
       normalizedUrl: `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`,
       sourceType: 'osm',
+      osmRelationId: relId,
     };
   }
 
-  // Waymarked Trails route URL: https://hiking.waymarkedtrails.org/#route?id=12345
+  // Waymarked Trails route URL: https://hiking.waymarkedtrails.org/#route?id=12345 or .../details/relation/12345...
+  // Waymarked Trails route IDs are OpenStreetMap relation IDs. Resolve them via Overpass for 100% reliability.
   const wmtMatch = url.match(/waymarkedtrails\.org\/.*?(?:id=|relation\/)(\d+)/i);
-  if (wmtMatch && !url.includes('/geometry/gpx')) {
+  if (wmtMatch) {
     const relId = wmtMatch[1];
+    const query = `[out:json][timeout:25];rel(${relId});(._;rel(r););out geom;`;
     return {
-      normalizedUrl: `https://hiking.waymarkedtrails.org/api/v1/details/relation/${relId}/geometry/gpx`,
-      sourceType: 'waymarked',
+      normalizedUrl: `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`,
+      sourceType: 'osm',
+      osmRelationId: relId,
     };
   }
 
@@ -564,8 +570,8 @@ export function normalizeTrackUrl(inputUrl: string): {
 }
 
 /**
- * Parses an OpenStreetMap Overpass API JSON response (`relation(...); out geom;`)
- * into a continuous CourseData track by stitching ordered member ways.
+ * Parses an OpenStreetMap Overpass API JSON response (`rel(...); (._;rel(r);); out geom;`)
+ * into a continuous CourseData track by stitching ordered member ways (including child relations for superroutes).
  */
 export function parseOverpassToCourseData(overpassJsonText: string, defaultTitle = 'OSM Running Route'): CourseData {
   const json = JSON.parse(overpassJsonText);
@@ -573,12 +579,22 @@ export function parseOverpassToCourseData(overpassJsonText: string, defaultTitle
     throw new Error('No OpenStreetMap route relation found in response.');
   }
 
-  const relation = json.elements.find((el: any) => el.type === 'relation') || json.elements[0];
-  const title = relation.tags?.name || relation.tags?.['name:en'] || defaultTitle;
+  const relations = json.elements.filter((el: any) => el.type === 'relation');
+  const primaryRelation = relations[0] || json.elements[0];
+  const title = primaryRelation.tags?.name || primaryRelation.tags?.['name:en'] || defaultTitle;
 
   const waySegments: { lat: number; lon: number; ele: number }[][] = [];
-  if (Array.isArray(relation.members)) {
-    for (const member of relation.members) {
+  const relationById = new Map<number, any>();
+  for (const rel of relations) {
+    if (rel.id) relationById.set(Number(rel.id), rel);
+  }
+
+  const collectWaysFromRelation = (rel: any, visited = new Set<number>()) => {
+    if (!rel || !Array.isArray(rel.members)) return;
+    if (rel.id && visited.has(Number(rel.id))) return;
+    if (rel.id) visited.add(Number(rel.id));
+
+    for (const member of rel.members) {
       if (
         member.type === 'way' &&
         Array.isArray(member.geometry) &&
@@ -596,7 +612,18 @@ export function parseOverpassToCourseData(overpassJsonText: string, defaultTitle
         if (seg.length >= 2) {
           waySegments.push(seg);
         }
+      } else if (member.type === 'relation' && member.ref && relationById.has(Number(member.ref))) {
+        collectWaysFromRelation(relationById.get(Number(member.ref)), visited);
       }
+    }
+  };
+
+  collectWaysFromRelation(primaryRelation);
+
+  // If primary relation didn't directly list child ways, check remaining relations in response
+  if (waySegments.length === 0) {
+    for (const rel of relations) {
+      collectWaysFromRelation(rel);
     }
   }
 
@@ -682,6 +709,40 @@ export function parseRideWithGpsJsonToCourseData(
 }
 
 /**
+ * Parses raw text content (GPX, TCX, GeoJSON, Overpass JSON, or RideWithGPS JSON) into CourseData.
+ */
+export function parseRouteTextToCourseData(text: string, customTitle?: string): CourseData {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    throw new Error('Route content is empty.');
+  }
+
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    const parsedJson = JSON.parse(trimmed);
+    if (parsedJson.elements && Array.isArray(parsedJson.elements)) {
+      return parseOverpassToCourseData(trimmed, customTitle || 'OSM Running Route');
+    }
+    if (
+      Array.isArray(parsedJson.track_points) ||
+      Array.isArray(parsedJson.route?.track_points)
+    ) {
+      return parseRideWithGpsJsonToCourseData(parsedJson, customTitle || 'RideWithGPS Route');
+    }
+    return parseGeoJsonToCourseData(trimmed, customTitle || 'Imported Route');
+  } else if (
+    trimmed.includes('<gpx') ||
+    trimmed.includes('<trk') ||
+    trimmed.includes('<rte') ||
+    trimmed.includes('<wpt') ||
+    trimmed.includes('<TrainingCenterDatabase')
+  ) {
+    return parseGpxToCourseData(trimmed, customTitle || 'Imported Route');
+  } else {
+    throw new Error('Unsupported route format. Expected GPX, FIT, TCX, GeoJSON, or RideWithGPS / OSM link.');
+  }
+}
+
+/**
  * Fetches and parses a route from a URL into CourseData.
  * Falls back to Cloudflare Worker stateless proxy if browser CORS blocks the third-party site.
  */
@@ -690,24 +751,79 @@ export async function fetchAndParseRoute(
   customTitle?: string,
   proxyWorkerBase = 'https://watchmyrun-mcp.webgears.workers.dev'
 ): Promise<CourseData> {
-  const { normalizedUrl, sourceType } = normalizeTrackUrl(inputUrl);
+  const { normalizedUrl, sourceType, osmRelationId } = normalizeTrackUrl(inputUrl);
+  const isBrowser = typeof (globalThis as any).window !== 'undefined';
 
   let text: string | null = null;
 
-  // 1. Attempt direct client-side fetch first (skip direct fetch for known CORS-restricted hosts like RideWithGPS)
-  if (sourceType !== 'ridewithgps') {
+  // 1a. For OpenStreetMap / Waymarked Trails relations, try Overpass mirrors with automatic failover
+  if (sourceType === 'osm' && osmRelationId) {
+    const query = `[out:json][timeout:25];rel(${osmRelationId});(._;rel(r););out geom;`;
+    const overpassMirrors = [
+      'https://overpass-api.de/api/interpreter',
+      'https://overpass.private.coffee/api/interpreter',
+      'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+    ];
+
+    for (const mirror of overpassMirrors) {
+      try {
+        const res = await fetch(`${mirror}?data=${encodeURIComponent(query)}`, {
+          headers: isBrowser
+            ? undefined
+            : {
+                'User-Agent': 'WatchMyRun/1.3 (+https://watchmy.run)',
+                Accept: 'application/json',
+              },
+        });
+        if (res.ok) {
+          const candidate = await res.text();
+          if (candidate.trim().startsWith('{')) {
+            text = candidate;
+            break;
+          }
+        }
+      } catch {
+        // Try next mirror
+      }
+    }
+  }
+
+  // 1b. Attempt direct fetch (in browser: skip RideWithGPS due to CORS; on server/worker: fetch directly with browser headers)
+  if (!text && (!isBrowser || sourceType !== 'ridewithgps')) {
     try {
-      const res = await fetch(normalizedUrl);
+      const res = await fetch(
+        normalizedUrl,
+        isBrowser
+          ? undefined
+          : {
+              headers: {
+                'User-Agent':
+                  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                Accept: 'application/json, application/gpx+xml, text/xml, */*',
+              },
+            }
+      );
       if (res.ok) {
         text = await res.text();
+      } else if (!isBrowser && sourceType === 'ridewithgps') {
+        const gpxFallbackUrl = normalizedUrl.replace(/\.json$/i, '.gpx?sub_format=track');
+        const gpxRes = await fetch(gpxFallbackUrl, {
+          headers: {
+            'User-Agent':
+              'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          },
+        });
+        if (gpxRes.ok) {
+          text = await gpxRes.text();
+        }
       }
     } catch {
       // CORS or network error, fallback to proxy
     }
   }
 
-  // 2. Fallback to stateless pass-through proxy
-  if (!text) {
+  // 2. Fallback to stateless pass-through proxy (when running in browser)
+  if (!text && isBrowser && proxyWorkerBase) {
     const proxyUrl = `${proxyWorkerBase}/api/proxy-route?url=${encodeURIComponent(normalizedUrl)}`;
     const res = await fetch(proxyUrl);
     if (!res.ok) {
@@ -729,54 +845,62 @@ export async function fetchAndParseRoute(
   }
 
   if (!text || text.length === 0) {
-    throw new Error('Fetched route file was empty.');
+    throw new Error('Could not fetch route from the provided link.');
   }
 
-  // 3. Detect format and parse
-  const trimmed = text.trim();
-  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-    const parsedJson = JSON.parse(trimmed);
-    if (parsedJson.elements && Array.isArray(parsedJson.elements)) {
-      return parseOverpassToCourseData(text, customTitle || 'OSM Running Route');
-    }
-    if (
-      Array.isArray(parsedJson.track_points) ||
-      Array.isArray(parsedJson.route?.track_points)
-    ) {
-      return parseRideWithGpsJsonToCourseData(parsedJson, customTitle || 'RideWithGPS Route');
-    }
-    return parseGeoJsonToCourseData(text, customTitle || 'Imported Route');
-  } else if (
-    trimmed.includes('<gpx') ||
-    trimmed.includes('<trk') ||
-    trimmed.includes('<rte') ||
-    trimmed.includes('<TrainingCenterDatabase')
-  ) {
-    return parseGpxToCourseData(text, customTitle || 'Imported Route');
-  } else {
-    throw new Error('Unsupported route file format. Expected GPX, FIT, TCX, GeoJSON, or RideWithGPS / OSM link.');
-  }
+  return parseRouteTextToCourseData(text, customTitle);
 }
 
 /**
- * Node.js regex fallback for testing without browser DOMParser.
+ * Non-DOM regex XML parser for Cloudflare Workers / Node.js environments without browser DOMParser.
+ * Supports GPX (<trkpt>, <rtept>, <wpt>) and Garmin TCX (<Trackpoint>).
  */
 function parseGpxSimpleRegex(gpxText: string, defaultTitle: string): CourseData {
-  const trkptRegex = /<trkpt\s+lat="([^"]+)"\s+lon="([^"]+)"[^>]*>([\s\S]*?)<\/trkpt>/g;
   const rawCoords: { lat: number; lon: number; ele: number }[] = [];
 
+  // Match <trkpt ...>, <rtept ...>, or <wpt ...> (both self-closing and paired tags)
+  const ptTagRegex = /<(trkpt|rtept|wpt)\b([^>]*?)(?:\/>|>([\s\S]*?)<\/\1>)/gi;
   let match: RegExpExecArray | null;
-  while ((match = trkptRegex.exec(gpxText)) !== null) {
-    const lat = parseFloat(match[1]);
-    const lon = parseFloat(match[2]);
-    const eleMatch = match[3].match(/<ele>([^<]+)<\/ele>/);
+  while ((match = ptTagRegex.exec(gpxText)) !== null) {
+    const attrs = match[2];
+    const body = match[3] || '';
+    const latMatch = attrs.match(/\blat\s*=\s*["']([^"']+)["']/i);
+    const lonMatch = attrs.match(/\blon\s*=\s*["']([^"']+)["']/i);
+    if (!latMatch || !lonMatch) continue;
+
+    const lat = parseFloat(latMatch[1]);
+    const lon = parseFloat(lonMatch[1]);
+    if (isNaN(lat) || isNaN(lon)) continue;
+
+    const eleMatch = body.match(/<ele>([^<]+)<\/ele>/i);
     const ele = eleMatch ? parseFloat(eleMatch[1]) : 0.0;
-    if (!isNaN(lat) && !isNaN(lon)) {
+    rawCoords.push({ lat, lon, ele: isNaN(ele) ? 0.0 : ele });
+  }
+
+  // Fallback to Garmin TCX <Trackpoint>
+  if (rawCoords.length < 2) {
+    const tcxRegex = /<Trackpoint\b[^>]*>([\s\S]*?)<\/Trackpoint>/gi;
+    while ((match = tcxRegex.exec(gpxText)) !== null) {
+      const body = match[1];
+      const latMatch = body.match(/<LatitudeDegrees>([^<]+)<\/LatitudeDegrees>/i);
+      const lonMatch = body.match(/<LongitudeDegrees>([^<]+)<\/LongitudeDegrees>/i);
+      if (!latMatch || !lonMatch) continue;
+
+      const lat = parseFloat(latMatch[1]);
+      const lon = parseFloat(lonMatch[1]);
+      if (isNaN(lat) || isNaN(lon)) continue;
+
+      const eleMatch = body.match(/<AltitudeMeters>([^<]+)<\/AltitudeMeters>/i);
+      const ele = eleMatch ? parseFloat(eleMatch[1]) : 0.0;
       rawCoords.push({ lat, lon, ele: isNaN(ele) ? 0.0 : ele });
     }
   }
 
-  const nameMatch = gpxText.match(/<name>([^<]+)<\/name>/);
+  if (rawCoords.length < 2) {
+    throw new Error('Track file contains insufficient coordinate points (minimum 2 points required).');
+  }
+
+  const nameMatch = gpxText.match(/<name>([^<]+)<\/name>/i);
   const title = nameMatch ? nameMatch[1].trim() : defaultTitle;
 
   return buildCourseDataFromCoords(title, rawCoords);

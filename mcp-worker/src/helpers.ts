@@ -1,7 +1,8 @@
 import { MarathonId, PacingStrategy, TrackingPin, CourseData } from '../../src/lib/forecasting/types';
-import { MARATHON_REGISTRY } from '../../src/lib/data/marathonRegistry';
+import { MARATHON_REGISTRY, MarathonInfo } from '../../src/lib/data/marathonRegistry';
 import { MAJOR_MARATHON_COURSES } from '../../src/lib/data/majorCourses';
 import { serializeUrlState, AppUrlState } from '../../src/lib/state/urlState';
+import { fetchAndParseRoute, parseRouteTextToCourseData } from '../../src/lib/data/customTrackParser';
 
 export const VALID_MARATHON_IDS: MarathonId[] = [
   'new_york',
@@ -104,7 +105,7 @@ export function resolveDateTime(timeStr: string, referenceDate: Date = new Date(
  */
 export function getCourseData(marathonId: MarathonId): CourseData {
   if (marathonId === 'custom') {
-    throw new Error('Custom courses cannot be loaded from pre-bundled major records. Please select an official World Marathon Major.');
+    throw new Error('Custom course selected without a courseUrl or courseContent. Provide courseUrl (e.g. RideWithGPS, OSM relation, or .gpx link) or courseContent.');
   }
   const course = MAJOR_MARATHON_COURSES[marathonId];
   if (!course) {
@@ -116,12 +117,68 @@ export function getCourseData(marathonId: MarathonId): CourseData {
 /**
  * Retrieves marathon registry metadata.
  */
-export function getMarathonInfo(marathonId: MarathonId) {
+export function getMarathonInfo(marathonId: MarathonId): MarathonInfo {
   const info = MARATHON_REGISTRY[marathonId];
   if (!info) {
     throw new Error(`Marathon registry not found for: "${marathonId}".`);
   }
   return info;
+}
+
+/**
+ * Resolves either a standard World Marathon Major or an on-the-fly custom course
+ * from a URL (RideWithGPS, OSM relation, Waymarked Trails, GPX/TCX/GeoJSON) or raw file content.
+ */
+export async function resolveCourseAndInfo(params: {
+  marathon?: MarathonId;
+  courseUrl?: string;
+  courseContent?: string;
+  courseTitle?: string;
+}): Promise<{
+  course: CourseData;
+  info: MarathonInfo;
+  marathonId: MarathonId;
+  trackUrl?: string;
+  trackTitle?: string;
+}> {
+  const { marathon, courseUrl, courseContent, courseTitle } = params;
+
+  if (courseUrl || courseContent) {
+    const course = courseContent
+      ? parseRouteTextToCourseData(courseContent, courseTitle)
+      : await fetchAndParseRoute(courseUrl!, courseTitle);
+
+    const baseInfo = MARATHON_REGISTRY.custom;
+    const distanceKm = Number((course.distanceM / 1000).toFixed(2));
+    const distanceMi = Number((course.distanceM / 1609.344).toFixed(2));
+    const resolvedTitle = courseTitle || course.title || baseInfo.name;
+
+    const info: MarathonInfo = {
+      ...baseInfo,
+      name: resolvedTitle,
+      shortName: resolvedTitle,
+      distanceKm,
+      distanceMi,
+    };
+
+    return {
+      course,
+      info,
+      marathonId: 'custom',
+      trackUrl: courseUrl,
+      trackTitle: resolvedTitle,
+    };
+  }
+
+  const resolvedMarathon: MarathonId = marathon || 'new_york';
+  const course = getCourseData(resolvedMarathon);
+  const info = getMarathonInfo(resolvedMarathon);
+
+  return {
+    course,
+    info,
+    marathonId: resolvedMarathon,
+  };
 }
 
 /**

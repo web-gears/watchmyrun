@@ -142,7 +142,7 @@ async function fetchWorkerSearchResults(
     const url = `${proxyWorkerBase}/api/search-routes?q=${encodeURIComponent(query)}`;
     const res = await fetch(url);
     if (!res.ok) return [];
-    const data = await res.json();
+    const data = (await res.json()) as any;
     if (Array.isArray(data.results)) {
       return data.results;
     }
@@ -162,14 +162,26 @@ async function fetchOverpassRunningRoutes(query: string): Promise<RaceSearchResu
     const safeQuery = query.replace(/[.*+?^${}()|[\]\\"]/g, ' ').trim();
     if (safeQuery.length < 2) return [];
 
-    const overpassQl = `[out:json][timeout:10];(relation["route"~"running|foot|fitness_trail"]["name"~"${safeQuery}",i];);out tags center 12;`;
-    const res = await fetch(
-      `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQl)}`
-    );
-    if (!res.ok) return [];
+    const overpassQl = `[out:json][timeout:10];(relation["route"~"running|foot|fitness_trail|hiking"]["name"~"${safeQuery}",i];);out tags center 12;`;
+    const endpoints = [
+      'https://overpass-api.de/api/interpreter',
+      'https://overpass.private.coffee/api/interpreter',
+      'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+    ];
 
-    const data = await res.json();
-    if (!data.elements || !Array.isArray(data.elements)) return [];
+    let data: any = null;
+    for (const endpoint of endpoints) {
+      try {
+        const res = await fetch(`${endpoint}?data=${encodeURIComponent(overpassQl)}`);
+        if (res.ok) {
+          data = await res.json();
+          if (data?.elements) break;
+        }
+      } catch {
+        // try next mirror
+      }
+    }
+    if (!data || !data.elements || !Array.isArray(data.elements)) return [];
 
     return data.elements
       .filter((el: any) => el.type === 'relation' && el.tags?.name)
@@ -199,6 +211,8 @@ async function fetchOverpassRunningRoutes(query: string): Promise<RaceSearchResu
 
 /**
  * Queries Waymarked Trails public search API for mapped routes.
+ * Each Waymarked Trails route is an OpenStreetMap relation (`item.id`),
+ * so we resolve its geometry directly via `osm-relation://${item.id}`.
  */
 async function fetchWaymarkedTrailsRoutes(query: string): Promise<RaceSearchResult[]> {
   try {
@@ -208,7 +222,7 @@ async function fetchWaymarkedTrailsRoutes(query: string): Promise<RaceSearchResu
     const res = await fetch(url);
     if (!res.ok) return [];
 
-    const data = await res.json();
+    const data = (await res.json()) as any;
     if (!data.results || !Array.isArray(data.results)) return [];
 
     return data.results
@@ -218,10 +232,10 @@ async function fetchWaymarkedTrailsRoutes(query: string): Promise<RaceSearchResu
         return {
           id: `wmt_${item.id}`,
           title: item.name,
-          subtitle: `${sub} (Relation #${item.id})`,
+          subtitle: `${sub} (OSM #${item.id})`,
           source: 'waymarked' as const,
           sourceLabel: 'Waymarked Trails',
-          routeUrl: `https://hiking.waymarkedtrails.org/api/v1/details/relation/${item.id}/geometry/gpx`,
+          routeUrl: `osm-relation://${item.id}`,
           externalUrl: `https://hiking.waymarkedtrails.org/#route?id=${item.id}`,
         };
       });

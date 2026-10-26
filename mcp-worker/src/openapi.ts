@@ -4,8 +4,8 @@ export function getOpenApiSpec(origin: string) {
     info: {
       title: 'WatchMy.Run Marathon Assistant',
       description:
-        'Live marathon forecasting, AirTag tracking pin recalibration, and spectator cheer meeting windows for World Marathon Majors (New York, Boston, Chicago, London, Berlin, Tokyo).',
-      version: '1.0.0',
+        'Live marathon forecasting, AirTag tracking pin recalibration, custom course search/import, and spectator cheer meeting windows for World Marathon Majors and any custom GPX/RideWithGPS/OSM course.',
+      version: '1.1.0',
     },
     servers: [
       {
@@ -13,6 +13,33 @@ export function getOpenApiSpec(origin: string) {
       },
     ],
     paths: {
+      '/api/search-routes': {
+        get: {
+          operationId: 'searchRaceCourses',
+          summary: 'Search public race courses, marathons, and trail routes',
+          description:
+            'Searches verified marathons, RideWithGPS public routes, OpenStreetMap running relations, and Waymarked Trails by keyword. Returns routeUrl links that can be passed as courseUrl to other endpoints.',
+          parameters: [
+            {
+              name: 'q',
+              in: 'query',
+              required: true,
+              schema: { type: 'string' },
+              description: 'Search keyword (e.g. "Valencia", "Marine Corps", "Madeira")',
+            },
+          ],
+          responses: {
+            '200': {
+              description: 'Matching race courses and routeUrls',
+              content: {
+                'application/json': {
+                  schema: { type: 'object' },
+                },
+              },
+            },
+          },
+        },
+      },
       '/api/marathons': {
         get: {
           operationId: 'listMarathons',
@@ -55,12 +82,19 @@ export function getOpenApiSpec(origin: string) {
             {
               name: 'marathon',
               in: 'query',
-              required: true,
+              required: false,
               schema: {
                 type: 'string',
-                enum: ['new_york', 'boston', 'chicago', 'london', 'berlin', 'tokyo'],
+                enum: ['new_york', 'boston', 'chicago', 'london', 'berlin', 'tokyo', 'custom'],
               },
-              description: 'The marathon ID',
+              description: 'The marathon ID (or "custom" when using courseUrl)',
+            },
+            {
+              name: 'courseUrl',
+              in: 'query',
+              required: false,
+              schema: { type: 'string' },
+              description: 'Custom course link (RideWithGPS, osm-relation://ID, Waymarked Trails, or .gpx URL)',
             },
           ],
           responses: {
@@ -87,12 +121,19 @@ export function getOpenApiSpec(origin: string) {
             {
               name: 'marathon',
               in: 'query',
-              required: true,
+              required: false,
               schema: {
                 type: 'string',
-                enum: ['new_york', 'boston', 'chicago', 'london', 'berlin', 'tokyo'],
+                enum: ['new_york', 'boston', 'chicago', 'london', 'berlin', 'tokyo', 'custom'],
               },
-              description: 'The marathon ID',
+              description: 'The marathon ID (optional when courseUrl is provided)',
+            },
+            {
+              name: 'courseUrl',
+              in: 'query',
+              required: false,
+              schema: { type: 'string' },
+              description: 'Optional custom course link (RideWithGPS, osm-relation://ID, Waymarked Trails, or .gpx URL)',
             },
             {
               name: 'startTime',
@@ -159,12 +200,19 @@ export function getOpenApiSpec(origin: string) {
             {
               name: 'marathon',
               in: 'query',
-              required: true,
+              required: false,
               schema: {
                 type: 'string',
-                enum: ['new_york', 'boston', 'chicago', 'london', 'berlin', 'tokyo'],
+                enum: ['new_york', 'boston', 'chicago', 'london', 'berlin', 'tokyo', 'custom'],
               },
-              description: 'The marathon ID',
+              description: 'The marathon ID (optional when courseUrl is provided)',
+            },
+            {
+              name: 'courseUrl',
+              in: 'query',
+              required: false,
+              schema: { type: 'string' },
+              description: 'Optional custom course link (RideWithGPS, osm-relation://ID, Waymarked Trails, or .gpx URL)',
             },
             {
               name: 'startTime',

@@ -3,6 +3,7 @@ import { createWatchMyRunMcpServer } from './server';
 import { getOpenApiSpec } from './openapi';
 import {
   executeListMarathons,
+  executeSearchRaceCourses,
   executeGetCourseLandmarks,
   executeCalculateForecast,
   executeGetCheerWindows,
@@ -280,101 +281,11 @@ export default {
           });
         }
 
-        // Stateless multi-source public route aggregator search (RideWithGPS + Waymarked Trails)
+        // Stateless multi-source public route search
         if (url.pathname === '/api/search-routes' && request.method === 'GET') {
           const q = (url.searchParams.get('q') || '').trim();
-          if (!q) {
-            return jsonResponse({ query: '', results: [] });
-          }
-
-          const results: Array<{
-            id: string;
-            title: string;
-            subtitle: string;
-            source: string;
-            sourceLabel: string;
-            routeUrl: string;
-            externalUrl: string;
-          }> = [];
-
-          // 1. Search RideWithGPS public routes via DuckDuckGo HTML
-          try {
-            const ddgUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(
-              `site:ridewithgps.com/routes ${q}`
-            )}`;
-            const ddgRes = await fetch(ddgUrl, {
-              headers: {
-                'User-Agent':
-                  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-                Accept: 'text/html',
-              },
-            });
-            if (ddgRes.ok) {
-              const html = await ddgRes.text();
-              const linkRegex = /<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
-              let match: RegExpExecArray | null;
-              const seenIds = new Set<string>();
-              while ((match = linkRegex.exec(html)) !== null) {
-                const rawHref = decodeURIComponent(match[1]);
-                const rwgIdMatch = rawHref.match(/ridewithgps\.com\/routes\/(\d+)/i);
-                if (rwgIdMatch && !seenIds.has(rwgIdMatch[1])) {
-                  const routeId = rwgIdMatch[1];
-                  seenIds.add(routeId);
-                  const cleanTitle = match[2]
-                    .replace(/<[^>]+>/g, '')
-                    .replace(/\s*\|\s*Ride with GPS.*$/i, '')
-                    .replace(/\s*-\s*Ride with GPS.*$/i, '')
-                    .trim();
-                  results.push({
-                    id: `rwg_${routeId}`,
-                    title: cleanTitle || `RideWithGPS Route #${routeId}`,
-                    subtitle: `RideWithGPS Route #${routeId} • Direct GPX Track`,
-                    source: 'ridewithgps',
-                    sourceLabel: 'RideWithGPS',
-                    routeUrl: `https://ridewithgps.com/routes/${routeId}`,
-                    externalUrl: `https://ridewithgps.com/routes/${routeId}`,
-                  });
-                }
-              }
-            }
-          } catch {
-            // Continue if DDG search fails
-          }
-
-          // 2. Search Waymarked Trails API
-          try {
-            const wmtUrl = `https://hiking.waymarkedtrails.org/api/v1/list/search?query=${encodeURIComponent(
-              q
-            )}&limit=8`;
-            const wmtRes = await fetch(wmtUrl, {
-              headers: {
-                'User-Agent': 'WatchMyRun/1.2 (+https://watchmy.run)',
-                Accept: 'application/json',
-              },
-            });
-            if (wmtRes.ok) {
-              const wmtData = (await wmtRes.json()) as any;
-              if (Array.isArray(wmtData.results)) {
-                for (const item of wmtData.results) {
-                  if (item.id && item.name) {
-                    results.push({
-                      id: `wmt_${item.id}`,
-                      title: item.name,
-                      subtitle: `${item.group || item.ref || 'Mapped Route'} (Relation #${item.id})`,
-                      source: 'waymarked',
-                      sourceLabel: 'Waymarked Trails',
-                      routeUrl: `https://hiking.waymarkedtrails.org/api/v1/details/relation/${item.id}/geometry/gpx`,
-                      externalUrl: `https://hiking.waymarkedtrails.org/#route?id=${item.id}`,
-                    });
-                  }
-                }
-              }
-            }
-          } catch {
-            // Continue if WMT search fails
-          }
-
-          return jsonResponse({ query: q, results });
+          const result = await executeSearchRaceCourses(q);
+          return jsonResponse(result);
         }
 
         if (url.pathname === '/api/marathons' && request.method === 'GET') {
@@ -383,12 +294,18 @@ export default {
         }
 
         if (url.pathname === '/api/landmarks' && request.method === 'GET') {
-          const marathon = (url.searchParams.get('marathon') as MarathonId) || 'new_york';
-          return jsonResponse(executeGetCourseLandmarks(marathon));
+          const marathon = (url.searchParams.get('marathon') as MarathonId) || undefined;
+          const courseUrl = url.searchParams.get('courseUrl') || undefined;
+          const courseTitle = url.searchParams.get('courseTitle') || undefined;
+          return jsonResponse(
+            await executeGetCourseLandmarks({ marathon, courseUrl, courseTitle })
+          );
         }
 
         if (url.pathname === '/api/forecast' && request.method === 'GET') {
-          const marathon = (url.searchParams.get('marathon') as MarathonId) || 'new_york';
+          const marathon = (url.searchParams.get('marathon') as MarathonId) || undefined;
+          const courseUrl = url.searchParams.get('courseUrl') || undefined;
+          const courseTitle = url.searchParams.get('courseTitle') || undefined;
           const startTime = url.searchParams.get('startTime') || '09:10';
           const targetFinishTime = url.searchParams.get('targetFinishTime') || undefined;
           const targetPace = url.searchParams.get('targetPace') || undefined;
@@ -396,8 +313,10 @@ export default {
           const strategy = (url.searchParams.get('strategy') as 'flat' | 'fatigue' | 'negative') || 'fatigue';
           const queryTime = url.searchParams.get('queryTime') || undefined;
 
-          const result = executeCalculateForecast({
+          const result = await executeCalculateForecast({
             marathon,
+            courseUrl,
+            courseTitle,
             startTime,
             targetFinishTime,
             targetPace,
@@ -410,7 +329,9 @@ export default {
         }
 
         if (url.pathname === '/api/cheer-windows' && request.method === 'GET') {
-          const marathon = (url.searchParams.get('marathon') as MarathonId) || 'new_york';
+          const marathon = (url.searchParams.get('marathon') as MarathonId) || undefined;
+          const courseUrl = url.searchParams.get('courseUrl') || undefined;
+          const courseTitle = url.searchParams.get('courseTitle') || undefined;
           const startTime = url.searchParams.get('startTime') || '09:10';
           const targetFinishTime = url.searchParams.get('targetFinishTime') || undefined;
           const cheerMilesParam = url.searchParams.get('cheerMiles') || '8.0,16.0';
@@ -422,8 +343,10 @@ export default {
             .filter((m) => !isNaN(m))
             .map((mile) => ({ mile, name: `Mile ${mile.toFixed(1)}` }));
 
-          const result = executeGetCheerWindows({
+          const result = await executeGetCheerWindows({
             marathon,
+            courseUrl,
+            courseTitle,
             startTime,
             targetFinishTime,
             cheerLocations,
@@ -435,8 +358,11 @@ export default {
 
         if (url.pathname === '/api/add-pin' && request.method === 'POST') {
           const body = (await request.json()) as any;
-          const result = executeAddTrackingPin({
-            marathon: body.marathon || 'new_york',
+          const result = await executeAddTrackingPin({
+            marathon: body.marathon,
+            courseUrl: body.courseUrl,
+            courseContent: body.courseContent,
+            courseTitle: body.courseTitle,
             lat: Number(body.lat),
             lon: Number(body.lon),
             timestamp: body.timestamp || new Date().toISOString(),
@@ -449,7 +375,9 @@ export default {
         }
 
         if (url.pathname === '/api/race-url' && request.method === 'GET') {
-          const marathon = (url.searchParams.get('marathon') as MarathonId) || 'new_york';
+          const marathon = (url.searchParams.get('marathon') as MarathonId) || undefined;
+          const courseUrl = url.searchParams.get('courseUrl') || undefined;
+          const courseTitle = url.searchParams.get('courseTitle') || undefined;
           const startTime = url.searchParams.get('startTime') || undefined;
           const finishTime = url.searchParams.get('finishTime') || undefined;
           const spectatorMilesParam = url.searchParams.get('spectatorMiles');
@@ -457,8 +385,10 @@ export default {
             ? spectatorMilesParam.split(',').map((m) => parseFloat(m.trim())).filter((m) => !isNaN(m))
             : undefined;
 
-          const result = executeGenerateRaceUrl({
+          const result = await executeGenerateRaceUrl({
             marathon,
+            courseUrl,
+            courseTitle,
             startTime,
             targetFinishTime: finishTime,
             spectatorMiles,
