@@ -103,6 +103,9 @@ export function resolveDateTime(timeStr: string, referenceDate: Date = new Date(
  * Retrieves the course data for a marathon major.
  */
 export function getCourseData(marathonId: MarathonId): CourseData {
+  if (marathonId === 'custom') {
+    throw new Error('Custom courses cannot be loaded from pre-bundled major records. Please select an official World Marathon Major.');
+  }
   const course = MAJOR_MARATHON_COURSES[marathonId];
   if (!course) {
     throw new Error(`Course data not found for marathon: "${marathonId}".`);

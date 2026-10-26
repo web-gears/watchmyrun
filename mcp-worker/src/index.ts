@@ -239,6 +239,144 @@ export default {
       const baseUrl = env.BASE_WEB_URL || 'https://watchmy.run';
 
       try {
+        // Stateless pass-through proxy for external GPX / GeoJSON routes blocked by CORS
+        if (url.pathname === '/api/proxy-route' && request.method === 'GET') {
+          const targetUrl = url.searchParams.get('url');
+          if (!targetUrl) {
+            return jsonResponse({ error: 'Missing url query parameter' }, 400);
+          }
+          let parsedUrl: URL;
+          try {
+            parsedUrl = new URL(targetUrl);
+          } catch {
+            return jsonResponse({ error: 'Invalid URL format' }, 400);
+          }
+          if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+            return jsonResponse({ error: 'Invalid URL protocol' }, 400);
+          }
+
+          const upstream = await fetch(parsedUrl.toString(), {
+            headers: {
+              'User-Agent':
+                'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+              Accept: 'application/json, application/gpx+xml, text/xml, */*',
+            },
+          });
+
+          if (!upstream.ok) {
+            return new Response(`Upstream fetch failed: ${upstream.status} ${upstream.statusText}`, {
+              status: upstream.status,
+              headers: CORS_HEADERS,
+            });
+          }
+
+          const bodyText = await upstream.text();
+          return new Response(bodyText, {
+            status: 200,
+            headers: {
+              'Content-Type': upstream.headers.get('content-type') || 'text/plain; charset=utf-8',
+              ...CORS_HEADERS,
+            },
+          });
+        }
+
+        // Stateless multi-source public route aggregator search (RideWithGPS + Waymarked Trails)
+        if (url.pathname === '/api/search-routes' && request.method === 'GET') {
+          const q = (url.searchParams.get('q') || '').trim();
+          if (!q) {
+            return jsonResponse({ query: '', results: [] });
+          }
+
+          const results: Array<{
+            id: string;
+            title: string;
+            subtitle: string;
+            source: string;
+            sourceLabel: string;
+            routeUrl: string;
+            externalUrl: string;
+          }> = [];
+
+          // 1. Search RideWithGPS public routes via DuckDuckGo HTML
+          try {
+            const ddgUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(
+              `site:ridewithgps.com/routes ${q}`
+            )}`;
+            const ddgRes = await fetch(ddgUrl, {
+              headers: {
+                'User-Agent':
+                  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                Accept: 'text/html',
+              },
+            });
+            if (ddgRes.ok) {
+              const html = await ddgRes.text();
+              const linkRegex = /<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
+              let match: RegExpExecArray | null;
+              const seenIds = new Set<string>();
+              while ((match = linkRegex.exec(html)) !== null) {
+                const rawHref = decodeURIComponent(match[1]);
+                const rwgIdMatch = rawHref.match(/ridewithgps\.com\/routes\/(\d+)/i);
+                if (rwgIdMatch && !seenIds.has(rwgIdMatch[1])) {
+                  const routeId = rwgIdMatch[1];
+                  seenIds.add(routeId);
+                  const cleanTitle = match[2]
+                    .replace(/<[^>]+>/g, '')
+                    .replace(/\s*\|\s*Ride with GPS.*$/i, '')
+                    .replace(/\s*-\s*Ride with GPS.*$/i, '')
+                    .trim();
+                  results.push({
+                    id: `rwg_${routeId}`,
+                    title: cleanTitle || `RideWithGPS Route #${routeId}`,
+                    subtitle: `RideWithGPS Route #${routeId} • Direct GPX Track`,
+                    source: 'ridewithgps',
+                    sourceLabel: 'RideWithGPS',
+                    routeUrl: `https://ridewithgps.com/routes/${routeId}`,
+                    externalUrl: `https://ridewithgps.com/routes/${routeId}`,
+                  });
+                }
+              }
+            }
+          } catch {
+            // Continue if DDG search fails
+          }
+
+          // 2. Search Waymarked Trails API
+          try {
+            const wmtUrl = `https://hiking.waymarkedtrails.org/api/v1/list/search?query=${encodeURIComponent(
+              q
+            )}&limit=8`;
+            const wmtRes = await fetch(wmtUrl, {
+              headers: {
+                'User-Agent': 'WatchMyRun/1.2 (+https://watchmy.run)',
+                Accept: 'application/json',
+              },
+            });
+            if (wmtRes.ok) {
+              const wmtData = (await wmtRes.json()) as any;
+              if (Array.isArray(wmtData.results)) {
+                for (const item of wmtData.results) {
+                  if (item.id && item.name) {
+                    results.push({
+                      id: `wmt_${item.id}`,
+                      title: item.name,
+                      subtitle: `${item.group || item.ref || 'Mapped Route'} (Relation #${item.id})`,
+                      source: 'waymarked',
+                      sourceLabel: 'Waymarked Trails',
+                      routeUrl: `https://hiking.waymarkedtrails.org/api/v1/details/relation/${item.id}/geometry/gpx`,
+                      externalUrl: `https://hiking.waymarkedtrails.org/#route?id=${item.id}`,
+                    });
+                  }
+                }
+              }
+            }
+          } catch {
+            // Continue if WMT search fails
+          }
+
+          return jsonResponse({ query: q, results });
+        }
+
         if (url.pathname === '/api/marathons' && request.method === 'GET') {
           const marathonId = (url.searchParams.get('marathonId') as MarathonId) || undefined;
           return jsonResponse(executeListMarathons(marathonId));

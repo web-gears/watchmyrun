@@ -1,4 +1,5 @@
-export type MarathonId = 'new_york' | 'boston' | 'chicago' | 'london' | 'berlin' | 'tokyo';
+export type MajorMarathonId = 'new_york' | 'boston' | 'chicago' | 'london' | 'berlin' | 'tokyo';
+export type MarathonId = MajorMarathonId | 'custom';
 
 export interface CoursePoint {
   lat: number;

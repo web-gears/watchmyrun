@@ -1,4 +1,4 @@
-import { CheerSpotPreset, MarathonId } from '../forecasting/types';
+import { CheerSpotPreset, CourseData, MarathonId } from '../forecasting/types';
 
 export interface MarathonWave {
   id: string;
@@ -265,9 +265,83 @@ export const MARATHON_REGISTRY: Record<MarathonId, MarathonInfo> = {
       { id: 'tok_26_0', name: 'Tokyo Station (Gyoko-dori)', mile: 26.0, distM: 41800, description: 'Gyoko-dori finish straight by Tokyo Station' },
     ],
   },
+  custom: {
+    id: 'custom',
+    name: 'Custom Race / Track',
+    shortName: 'Custom Course',
+    code: 'CUSTOM',
+    flag: '🗺️',
+    city: 'Custom Track',
+    country: 'Custom',
+    annualDate: 'Custom Route',
+    defaultStartTime: '08:00',
+    defaultFinishTime: '01:45:00',
+    defaultPace: '05:00',
+    distanceKm: 21.1,
+    distanceMi: 13.1,
+    center: [40.7128, -74.006],
+    defaultZoom: 12,
+    onlineGeoJsonUrl: '',
+    localGeoJsonPath: '',
+    elevationHighlight: 'Custom Elevation Profile',
+    waves: [],
+    cheerPresets: [],
+  },
 };
 
-export const MARATHON_LIST: MarathonInfo[] = Object.values(MARATHON_REGISTRY);
+export const MAJOR_MARATHONS: MarathonInfo[] = [
+  MARATHON_REGISTRY.new_york,
+  MARATHON_REGISTRY.boston,
+  MARATHON_REGISTRY.chicago,
+  MARATHON_REGISTRY.london,
+  MARATHON_REGISTRY.berlin,
+  MARATHON_REGISTRY.tokyo,
+];
+
+export const MARATHON_LIST: MarathonInfo[] = MAJOR_MARATHONS;
+
+/**
+ * Creates dynamic MarathonInfo metadata from a parsed custom CourseData object.
+ */
+export function createCustomMarathonInfo(customCourse: CourseData): MarathonInfo {
+  const distKm = Number((customCourse.distanceM / 1000).toFixed(1));
+  const distMi = Number((customCourse.distanceM / 1609.344).toFixed(1));
+  const p0 = customCourse.points[0] || { lat: 40.7128, lon: -74.006 };
+  const cheerPresets: CheerSpotPreset[] = customCourse.timingMats
+    .filter((m) => m.name !== 'Start' && m.name !== 'Finish')
+    .map((m, idx) => ({
+      id: `mat_${idx}`,
+      name: `${m.name} Checkpoint`,
+      mile: Number((m.targetDistM / 1609.344).toFixed(1)),
+      distM: m.targetDistM,
+      description: `Timing split checkpoint at ${m.name}`,
+    }));
+
+  return {
+    id: 'custom',
+    name: customCourse.title || 'Custom Track',
+    shortName: customCourse.title || 'Custom',
+    code: 'CUSTOM',
+    flag: '🗺️',
+    city: 'Custom Track',
+    country: 'Custom',
+    annualDate: 'Custom Route',
+    defaultStartTime: '08:00',
+    defaultFinishTime: '01:45:00',
+    defaultPace: '05:00',
+    distanceKm: distKm,
+    distanceMi: distMi,
+    center: [p0.lat, p0.lon],
+    defaultZoom: 12,
+    onlineGeoJsonUrl: '',
+    localGeoJsonPath: '',
+    elevationHighlight: `${Math.round(customCourse.elevationSummary.gainM)}m gain / ${Math.round(
+      customCourse.elevationSummary.lossM
+    )}m loss`,
+    waves: [],
+    cheerPresets,
+  };
+}
 
 /**
  * Calculates the great-circle distance between two points on the Earth in kilometers (Haversine formula).

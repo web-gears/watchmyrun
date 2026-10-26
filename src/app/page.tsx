@@ -12,19 +12,42 @@ import {
   Badge,
 } from '@mantine/core';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
+import dynamic from 'next/dynamic';
 import { IconRun, IconMapPin, IconPlayerPlay, IconTrophy, IconAdjustments } from '@tabler/icons-react';
 import { AppHeader } from '@/components/Header/AppHeader';
 import { MapWrapper } from '@/components/Map/MapWrapper';
 import { RaceConfigDrawer } from '@/components/Controls/RaceConfigDrawer';
-import { RaceSelectionModal } from '@/components/Controls/RaceSelectionModal';
-import { HowItWorksModal } from '@/components/Controls/HowItWorksModal';
-import { PinDropModal } from '@/components/Controls/PinDropModal';
-import { EditPinModal } from '@/components/Controls/EditPinModal';
 import { RunnerStatusHUD } from '@/components/HUD/RunnerStatusHUD';
 import { SpectatorWindowCard } from '@/components/HUD/SpectatorWindowCard';
 import { AwaitingRunnerCard } from '@/components/HUD/AwaitingRunnerCard';
 import { UndoToast } from '@/components/Common/UndoToast';
-import { SwitchRaceConfirmModal } from '@/components/Controls/SwitchRaceConfirmModal';
+
+// Lightweight on-demand dynamic loading for modals & secondary workflows
+const RaceSelectionModal = dynamic(
+  () => import('@/components/Controls/RaceSelectionModal').then((mod) => mod.RaceSelectionModal),
+  { ssr: false }
+);
+const CustomRouteModal = dynamic(
+  () => import('@/components/Controls/CustomRouteModal').then((mod) => mod.CustomRouteModal),
+  { ssr: false }
+);
+const HowItWorksModal = dynamic(
+  () => import('@/components/Controls/HowItWorksModal').then((mod) => mod.HowItWorksModal),
+  { ssr: false }
+);
+const PinDropModal = dynamic(
+  () => import('@/components/Controls/PinDropModal').then((mod) => mod.PinDropModal),
+  { ssr: false }
+);
+const EditPinModal = dynamic(
+  () => import('@/components/Controls/EditPinModal').then((mod) => mod.EditPinModal),
+  { ssr: false }
+);
+const SwitchRaceConfirmModal = dynamic(
+  () => import('@/components/Controls/SwitchRaceConfirmModal').then((mod) => mod.SwitchRaceConfirmModal),
+  { ssr: false }
+);
+
 import {
   NEW_YORK_COURSES,
   RaceDistanceId,
@@ -35,10 +58,12 @@ import { MAJOR_MARATHON_COURSES } from '@/lib/data/majorCourses';
 import {
   MARATHON_REGISTRY,
   MarathonInfo,
+  createCustomMarathonInfo,
   detectClosestMarathonByTimezone,
   findClosestMarathon,
 } from '@/lib/data/marathonRegistry';
 import {
+  CourseData,
   MarathonId,
   PacingStrategy,
   TrackingPin,
@@ -63,27 +88,37 @@ import { parseUrlState, serializeUrlState } from '@/lib/state/urlState';
 const LOCAL_STORAGE_MARATHON_KEY = 'follow_me_running_selected_marathon';
 const LOCAL_STORAGE_DISTANCE_KEY = 'follow_me_running_selected_distance';
 const LOCAL_STORAGE_VISITED_KEY = 'follow_me_running_has_visited';
+const LOCAL_STORAGE_CUSTOM_COURSE_KEY = 'watchmyrun_custom_course';
 
 export default function MarathonTrackerPage() {
-  // 1. World Marathon Major Selection (New York, Boston, Chicago, London, Berlin, Tokyo)
+  // 1. World Marathon Major & Custom Route Selection
   const [selectedMarathon, setSelectedMarathon] = useState<MarathonId>('new_york');
   const [selectedDistance, setSelectedDistance] = useState<RaceDistanceId>('marathon');
+  const [customCourse, setCustomCourse] = useState<CourseData | null>(null);
+  const [customTrackUrl, setCustomTrackUrl] = useState<string | undefined>(undefined);
   const [raceModalOpen, setRaceModalOpen] = useState<boolean>(false);
+  const [customRouteModalOpen, setCustomRouteModalOpen] = useState<boolean>(false);
   const [howItWorksModalOpen, setHowItWorksModalOpen] = useState<boolean>(false);
   const [pendingMarathonId, setPendingMarathonId] = useState<MarathonId | null>(null);
   const [undoToast, setUndoToast] = useState<{ message: string; action: () => void } | null>(null);
   const undoTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const marathonInfo: MarathonInfo = useMemo(() => {
+    if (selectedMarathon === 'custom' && customCourse) {
+      return createCustomMarathonInfo(customCourse);
+    }
     return MARATHON_REGISTRY[selectedMarathon] || MARATHON_REGISTRY.new_york;
-  }, [selectedMarathon]);
+  }, [selectedMarathon, customCourse]);
 
   const courseData = useMemo(() => {
+    if (selectedMarathon === 'custom') {
+      return customCourse || MAJOR_MARATHON_COURSES.new_york;
+    }
     if (selectedMarathon === 'new_york' && selectedDistance !== 'marathon') {
       return NEW_YORK_COURSES[selectedDistance] || MAJOR_MARATHON_COURSES.new_york;
     }
     return MAJOR_MARATHON_COURSES[selectedMarathon] || MAJOR_MARATHON_COURSES.new_york;
-  }, [selectedMarathon, selectedDistance]);
+  }, [selectedMarathon, selectedDistance, customCourse]);
 
   const distanceOption: RaceDistanceOption = useMemo(() => {
     if (selectedMarathon === 'new_york') {
@@ -195,7 +230,16 @@ export default function MarathonTrackerPage() {
       const urlState = parseUrlState(searchParams);
       const storedMarathon = localStorage.getItem(LOCAL_STORAGE_MARATHON_KEY) as MarathonId | null;
       const storedDistance = localStorage.getItem(LOCAL_STORAGE_DISTANCE_KEY) as RaceDistanceId | null;
+      const storedCustomCourseStr = localStorage.getItem(LOCAL_STORAGE_CUSTOM_COURSE_KEY);
       const hasVisited = localStorage.getItem(LOCAL_STORAGE_VISITED_KEY);
+
+      let parsedCustomCourse: CourseData | null = null;
+      if (storedCustomCourseStr) {
+        try {
+          parsedCustomCourse = JSON.parse(storedCustomCourseStr) as CourseData;
+          setCustomCourse(parsedCustomCourse);
+        } catch {}
+      }
 
       let initialMarathon: MarathonId = 'new_york';
 
@@ -226,8 +270,25 @@ export default function MarathonTrackerPage() {
         }
       }
 
+      // If URL has trackUrl, load and parse asynchronously via on-demand dynamic module loading
+      if (urlState.trackUrl) {
+        setCustomTrackUrl(urlState.trackUrl);
+        import('@/lib/data/customTrackParser')
+          .then(({ fetchAndParseRoute }) => fetchAndParseRoute(urlState.trackUrl!, urlState.trackTitle))
+          .then((course) => {
+            setCustomCourse(course);
+            setSelectedMarathon('custom');
+            try {
+              localStorage.setItem(LOCAL_STORAGE_CUSTOM_COURSE_KEY, JSON.stringify(course));
+            } catch {}
+          })
+          .catch((err) => {
+            console.warn('Failed to load track from trackUrl parameter:', err);
+          });
+      }
+
       // Display How It Works popup on first visit
-      if (!hasVisited && !urlState.marathon) {
+      if (!hasVisited && !urlState.marathon && !urlState.trackUrl) {
         setHowItWorksModalOpen(true);
         localStorage.setItem(LOCAL_STORAGE_VISITED_KEY, 'true');
       }
@@ -239,13 +300,18 @@ export default function MarathonTrackerPage() {
       }
 
       const activeCourse =
-        initialMarathon === 'new_york' && urlState.distance && NEW_YORK_COURSES[urlState.distance]
+        initialMarathon === 'custom' && parsedCustomCourse
+          ? parsedCustomCourse
+          : initialMarathon === 'new_york' && urlState.distance && NEW_YORK_COURSES[urlState.distance]
           ? NEW_YORK_COURSES[urlState.distance]
-          : MAJOR_MARATHON_COURSES[initialMarathon] || MAJOR_MARATHON_COURSES.new_york;
+          : (initialMarathon !== 'custom' ? MAJOR_MARATHON_COURSES[initialMarathon] : null) || MAJOR_MARATHON_COURSES.new_york;
 
       if (urlState.startTime) setStartTimeStr(urlState.startTime);
       else {
-        const info = MARATHON_REGISTRY[initialMarathon];
+        const info =
+          initialMarathon === 'custom' && parsedCustomCourse
+            ? createCustomMarathonInfo(parsedCustomCourse)
+            : MARATHON_REGISTRY[initialMarathon];
         if (info) setStartTimeStr(info.defaultStartTime);
       }
 
@@ -304,11 +370,24 @@ export default function MarathonTrackerPage() {
         pins,
         spectatorDistMList: spectatorSpots.map((s) => s.distM),
         spectatorDistM: spectatorSpots[0]?.distM,
+        trackUrl: selectedMarathon === 'custom' ? customTrackUrl : undefined,
+        trackTitle: selectedMarathon === 'custom' ? customCourse?.title : undefined,
       });
       const newUrl = queryString ? `?${queryString}` : window.location.pathname;
       window.history.replaceState({}, '', newUrl);
     }
-  }, [selectedMarathon, selectedDistance, startTimeStr, finishTimeStr, paceStr, strategy, pins, spectatorSpots]);
+  }, [
+    selectedMarathon,
+    selectedDistance,
+    startTimeStr,
+    finishTimeStr,
+    paceStr,
+    strategy,
+    pins,
+    spectatorSpots,
+    customTrackUrl,
+    customCourse,
+  ]);
 
   // Reversible action undo handlers
   const triggerUndo = useCallback((message: string, action: () => void) => {
@@ -338,13 +417,17 @@ export default function MarathonTrackerPage() {
     setUndoToast(null);
   }, []);
 
-  // Handle switching World Marathon Majors with confirmation if data exists
+  // Handle switching World Marathon Majors or Custom Course with confirmation if data exists
   const confirmMarathonChange = useCallback(
-    (marathonId: MarathonId) => {
+    (marathonId: MarathonId, courseOverride?: CourseData) => {
       setSelectedMarathon(marathonId);
       setSelectedDistance('marathon');
 
-      const info = MARATHON_REGISTRY[marathonId];
+      const courseForMeta = courseOverride || (marathonId === 'custom' ? customCourse : null);
+      const info =
+        marathonId === 'custom' && courseForMeta
+          ? createCustomMarathonInfo(courseForMeta)
+          : MARATHON_REGISTRY[marathonId];
       if (info) {
         setStartTimeStr(info.defaultStartTime);
         // Update goal finish time and pace to match the newly selected major's baseline
@@ -359,8 +442,33 @@ export default function MarathonTrackerPage() {
       setSpectatorSpots([]);
       setPendingMarathonId(null);
     },
-    [finishTimeStr, paceStr]
+    [finishTimeStr, paceStr, customCourse]
   );
+
+  const handleSelectCustomCourse = useCallback(
+    (course: CourseData, sourceUrl?: string) => {
+      setCustomCourse(course);
+      setCustomTrackUrl(sourceUrl);
+      try {
+        localStorage.setItem(LOCAL_STORAGE_CUSTOM_COURSE_KEY, JSON.stringify(course));
+      } catch (err) {
+        console.warn('Failed to save custom course to localStorage', err);
+      }
+      confirmMarathonChange('custom', course);
+    },
+    [confirmMarathonChange]
+  );
+
+  const handleClearCustomCourse = useCallback(() => {
+    setCustomCourse(null);
+    setCustomTrackUrl(undefined);
+    try {
+      localStorage.removeItem(LOCAL_STORAGE_CUSTOM_COURSE_KEY);
+    } catch {}
+    if (selectedMarathon === 'custom') {
+      confirmMarathonChange('new_york');
+    }
+  }, [selectedMarathon, confirmMarathonChange]);
 
   const handleMarathonChange = useCallback(
     (marathonId: MarathonId) => {
@@ -1008,28 +1116,45 @@ export default function MarathonTrackerPage() {
         </ScrollArea.Autosize>
       </Drawer>
 
-      {/* 4. World Marathon Major Selection Modal */}
-      <RaceSelectionModal
-        opened={raceModalOpen}
-        onClose={() => setRaceModalOpen(false)}
-        selectedMarathon={selectedMarathon}
-        onSelectMarathon={handleMarathonChange}
-        selectedDistance={selectedDistance}
-        onSelectDistance={handleDistanceChange}
-      />
+      {/* 4. World Marathon Major & Custom Route Selection Modal (On-demand dynamic load) */}
+      {raceModalOpen && (
+        <RaceSelectionModal
+          opened={raceModalOpen}
+          onClose={() => setRaceModalOpen(false)}
+          selectedMarathon={selectedMarathon}
+          onSelectMarathon={handleMarathonChange}
+          selectedDistance={selectedDistance}
+          onSelectDistance={handleDistanceChange}
+          customCourse={customCourse}
+          onOpenCustomModal={() => setCustomRouteModalOpen(true)}
+        />
+      )}
 
-      {/* 4b. How It Works Modal */}
-      <HowItWorksModal
-        opened={howItWorksModalOpen}
-        onClose={() => setHowItWorksModalOpen(false)}
-        onSelectRace={() => setRaceModalOpen(true)}
-        selectedMarathonName={marathonInfo.name}
-        startTimeStr={startTimeStr}
-        finishTimeStr={finishTimeStr}
-      />
+      {/* 4a. In-Memory Custom Route Import Modal (Zero Server Storage, on-demand dynamic load) */}
+      {customRouteModalOpen && (
+        <CustomRouteModal
+          opened={customRouteModalOpen}
+          onClose={() => setCustomRouteModalOpen(false)}
+          activeCustomCourse={customCourse}
+          onSelectCustomCourse={handleSelectCustomCourse}
+          onClearCustomCourse={handleClearCustomCourse}
+        />
+      )}
 
-      {/* 5. Pin Drop Calibration Modal */}
-      {courseData && (
+      {/* 4b. How It Works Modal (On-demand dynamic load) */}
+      {howItWorksModalOpen && (
+        <HowItWorksModal
+          opened={howItWorksModalOpen}
+          onClose={() => setHowItWorksModalOpen(false)}
+          onSelectRace={() => setRaceModalOpen(true)}
+          selectedMarathonName={marathonInfo.name}
+          startTimeStr={startTimeStr}
+          finishTimeStr={finishTimeStr}
+        />
+      )}
+
+      {/* 5. Pin Drop Calibration Modal (On-demand dynamic load) */}
+      {courseData && pinModalOpen && (
         <PinDropModal
           opened={pinModalOpen}
           onClose={() => setPinModalOpen(false)}
@@ -1043,8 +1168,8 @@ export default function MarathonTrackerPage() {
         />
       )}
 
-      {/* 6. Pin Edit Modal */}
-      {courseData && (
+      {/* 6. Pin Edit Modal (On-demand dynamic load) */}
+      {courseData && Boolean(editingPin) && (
         <EditPinModal
           opened={Boolean(editingPin)}
           onClose={() => setEditingPin(null)}
@@ -1058,22 +1183,28 @@ export default function MarathonTrackerPage() {
         />
       )}
 
-      {/* 7. Destructive Race Switch Confirmation Modal */}
-      <SwitchRaceConfirmModal
-        opened={Boolean(pendingMarathonId)}
-        onClose={() => setPendingMarathonId(null)}
-        onConfirm={() => {
-          if (pendingMarathonId) {
-            confirmMarathonChange(pendingMarathonId);
+      {/* 7. Destructive Race Switch Confirmation Modal (On-demand dynamic load) */}
+      {Boolean(pendingMarathonId) && (
+        <SwitchRaceConfirmModal
+          opened={Boolean(pendingMarathonId)}
+          onClose={() => setPendingMarathonId(null)}
+          onConfirm={() => {
+            if (pendingMarathonId) {
+              confirmMarathonChange(pendingMarathonId);
+            }
+          }}
+          currentMarathonName={marathonInfo.name}
+          targetMarathonName={
+            pendingMarathonId
+              ? pendingMarathonId === 'custom'
+                ? customCourse?.title || 'Custom Course'
+                : MARATHON_REGISTRY[pendingMarathonId]?.name || ''
+              : ''
           }
-        }}
-        currentMarathonName={marathonInfo.name}
-        targetMarathonName={
-          pendingMarathonId ? MARATHON_REGISTRY[pendingMarathonId]?.name || '' : ''
-        }
-        pinsCount={pins.length}
-        spotsCount={spectatorSpots.length}
-      />
+          pinsCount={pins.length}
+          spotsCount={spectatorSpots.length}
+        />
+      )}
 
       {/* 8. Reversible Action Undo Notification (8-Second Safety Window) */}
       <UndoToast

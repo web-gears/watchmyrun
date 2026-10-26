@@ -11,9 +11,19 @@ export interface AppUrlState {
   pins?: TrackingPin[];
   spectatorDistM?: number;
   spectatorDistMList?: number[];
+  trackUrl?: string;
+  trackTitle?: string;
 }
 
-const VALID_MARATHONS: MarathonId[] = ['new_york', 'boston', 'chicago', 'london', 'berlin', 'tokyo'];
+const VALID_MARATHONS: MarathonId[] = [
+  'new_york',
+  'boston',
+  'chicago',
+  'london',
+  'berlin',
+  'tokyo',
+  'custom',
+];
 const VALID_DISTANCES: RaceDistanceId[] = ['marathon', 'half', '10k', '5k'];
 
 export function parseUrlState(searchParams: URLSearchParams): AppUrlState {
@@ -80,6 +90,12 @@ export function parseUrlState(searchParams: URLSearchParams): AppUrlState {
     }
   }
 
+  const trackUrl = searchParams.get('trackUrl') || searchParams.get('routeUrl') || undefined;
+  const trackTitle = searchParams.get('trackTitle') || searchParams.get('title') || undefined;
+  if (!marathon && trackUrl) {
+    marathon = 'custom';
+  }
+
   return {
     marathon,
     distance,
@@ -90,6 +106,8 @@ export function parseUrlState(searchParams: URLSearchParams): AppUrlState {
     pins,
     spectatorDistM,
     spectatorDistMList,
+    trackUrl,
+    trackTitle,
   };
 }
 
@@ -102,6 +120,9 @@ export function serializeUrlState(state: AppUrlState): string {
   if (state.marathon === 'new_york' && state.distance && state.distance !== 'marathon') {
     params.set('distance', state.distance);
   }
+
+  if (state.trackUrl) params.set('trackUrl', state.trackUrl);
+  if (state.trackTitle) params.set('trackTitle', state.trackTitle);
 
   if (state.startTime) params.set('start', state.startTime);
   if (state.pace) params.set('pace', state.pace);

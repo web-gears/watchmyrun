@@ -17,8 +17,9 @@ import {
   IconCalendar,
   IconTrendingUp,
   IconTrophy,
+  IconRoute,
 } from '@tabler/icons-react';
-import { MarathonId } from '@/lib/forecasting/types';
+import { CourseData, MarathonId } from '@/lib/forecasting/types';
 import { MARATHON_LIST, MarathonInfo } from '@/lib/data/marathonRegistry';
 import { RaceDistanceId, RACE_DISTANCE_OPTIONS } from '@/lib/data/newYorkCourses';
 
@@ -29,6 +30,8 @@ interface RaceSelectionModalProps {
   onSelectMarathon: (id: MarathonId) => void;
   selectedDistance?: RaceDistanceId;
   onSelectDistance?: (distId: RaceDistanceId) => void;
+  customCourse?: CourseData | null;
+  onOpenCustomModal?: () => void;
 }
 
 export function RaceSelectionModal({
@@ -38,6 +41,8 @@ export function RaceSelectionModal({
   onSelectMarathon,
   selectedDistance = 'marathon',
   onSelectDistance,
+  customCourse,
+  onOpenCustomModal,
 }: RaceSelectionModalProps) {
   const handleChoose = (id: MarathonId) => {
     onSelectMarathon(id);
@@ -84,12 +89,105 @@ export function RaceSelectionModal({
       }}
     >
       <Stack gap="md">
+        {/* Custom Course Card */}
+        {onOpenCustomModal && (
+          <Card
+            withBorder
+            padding="md"
+            radius="md"
+            style={{
+              border:
+                selectedMarathon === 'custom'
+                  ? '2px solid var(--mantine-color-cyan-6)'
+                  : '1px dashed var(--mantine-color-cyan-6)',
+              backgroundColor:
+                selectedMarathon === 'custom'
+                  ? 'var(--mantine-color-cyan-light)'
+                  : 'var(--mantine-color-default-hover)',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+            onClick={() => {
+              onClose();
+              onOpenCustomModal();
+            }}
+          >
+            <Group justify="space-between" align="center" wrap="nowrap" gap="sm">
+              <Group gap="sm" wrap="nowrap" style={{ minWidth: 0, flex: 1 }}>
+                <Box
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 8,
+                    background: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                    flexShrink: 0,
+                  }}
+                >
+                  <IconRoute size={20} stroke={2.2} />
+                </Box>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <Group gap="xs" align="center" wrap="nowrap">
+                    <Text fw={700} size="sm" truncate>
+                      {customCourse ? customCourse.title : 'Search or Import Any Race Course'}
+                    </Text>
+                    {selectedMarathon === 'custom' ? (
+                      <Badge size="xs" variant="filled" color="cyan" leftSection={<IconCheck size={10} />}>
+                        Active
+                      </Badge>
+                    ) : customCourse ? (
+                      <Badge size="xs" variant="light" color="cyan">
+                        Loaded
+                      </Badge>
+                    ) : null}
+                  </Group>
+                  <Text size="xs" c="dimmed" truncate>
+                    {customCourse
+                      ? `${(customCourse.distanceM / 1000).toFixed(1)} km (${(customCourse.distanceM / 1609.344).toFixed(1)} mi) • Click to search or change course`
+                      : 'Search race courses worldwide, upload a GPX/FIT/TCX/GeoJSON file, or paste a route link'}
+                  </Text>
+                </div>
+              </Group>
+
+              <Group gap={6} wrap="nowrap" style={{ flexShrink: 0 }}>
+                {customCourse && selectedMarathon !== 'custom' && (
+                  <Button
+                    size="xs"
+                    variant="light"
+                    color="cyan"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleChoose('custom');
+                    }}
+                  >
+                    Select
+                  </Button>
+                )}
+                <Button
+                  size="xs"
+                  variant={selectedMarathon === 'custom' ? 'filled' : 'subtle'}
+                  color="cyan"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onClose();
+                    onOpenCustomModal();
+                  }}
+                >
+                  {customCourse ? 'Change Track' : 'Search / Import'}
+                </Button>
+              </Group>
+            </Group>
+          </Card>
+        )}
 
         <div>
           <Group justify="space-between" align="baseline" mb="xs">
             <div>
               <Text fw={700} size="sm">
-                Select Your Marathon Major to Begin
+                World Marathon Majors
               </Text>
               <Text size="xs" c="dimmed">
                 Includes official course maps, timing mats, elevation profiles, and curated cheer stations
