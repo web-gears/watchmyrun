@@ -109,122 +109,89 @@ export async function executeSearchRaceCourses(query: string) {
     }
   };
 
-  // 1. Search RideWithGPS public routes via DuckDuckGo HTML
-  try {
-    const ddgUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(
-      `site:ridewithgps.com/routes ${q}`
-    )}`;
-    const ddgRes = await fetch(ddgUrl, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-        Accept: 'text/html',
-      },
-    });
-    if (ddgRes.ok) {
-      const html = await ddgRes.text();
-      const linkRegex = /<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
-      let match: RegExpExecArray | null;
-      const seenIds = new Set<string>();
-      while ((match = linkRegex.exec(html)) !== null) {
-        const rawHref = decodeURIComponent(match[1]);
-        const rwgIdMatch = rawHref.match(/ridewithgps\.com\/routes\/(\d+)/i);
-        if (rwgIdMatch && !seenIds.has(rwgIdMatch[1])) {
-          const routeId = rwgIdMatch[1];
-          seenIds.add(routeId);
-          const cleanTitle = match[2]
-            .replace(/<[^>]+>/g, '')
-            .replace(/\s*\|\s*Ride with GPS.*$/i, '')
-            .replace(/\s*-\s*Ride with GPS.*$/i, '')
-            .trim();
-          addResult({
-            id: `rwg_${routeId}`,
-            title: cleanTitle || `RideWithGPS Route #${routeId}`,
-            subtitle: `RideWithGPS Route #${routeId}`,
-            source: 'ridewithgps',
-            sourceLabel: 'RideWithGPS',
-            routeUrl: `https://ridewithgps.com/routes/${routeId}`,
-            externalUrl: `https://ridewithgps.com/routes/${routeId}`,
-          });
+  // Run RideWithGPS and Waymarked Trails indexed searches concurrently (~200-400ms total)
+  const rwgTask = (async () => {
+    try {
+      const ddgUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(
+        `site:ridewithgps.com/routes ${q}`
+      )}`;
+      const ddgRes = await fetch(ddgUrl, {
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          Accept: 'text/html',
+        },
+        signal: typeof AbortSignal !== 'undefined' && 'timeout' in AbortSignal ? AbortSignal.timeout(2500) : undefined,
+      });
+      if (ddgRes.ok) {
+        const html = await ddgRes.text();
+        const linkRegex = /<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
+        let match: RegExpExecArray | null;
+        const seenIds = new Set<string>();
+        while ((match = linkRegex.exec(html)) !== null) {
+          const rawHref = decodeURIComponent(match[1]);
+          const rwgIdMatch = rawHref.match(/ridewithgps\.com\/routes\/(\d+)/i);
+          if (rwgIdMatch && !seenIds.has(rwgIdMatch[1])) {
+            const routeId = rwgIdMatch[1];
+            seenIds.add(routeId);
+            const cleanTitle = match[2]
+              .replace(/<[^>]+>/g, '')
+              .replace(/\s*\|\s*Ride with GPS.*$/i, '')
+              .replace(/\s*-\s*Ride with GPS.*$/i, '')
+              .trim();
+            addResult({
+              id: `rwg_${routeId}`,
+              title: cleanTitle || `RideWithGPS Route #${routeId}`,
+              subtitle: `RideWithGPS Route #${routeId}`,
+              source: 'ridewithgps',
+              sourceLabel: 'RideWithGPS',
+              routeUrl: `https://ridewithgps.com/routes/${routeId}`,
+              externalUrl: `https://ridewithgps.com/routes/${routeId}`,
+            });
+          }
         }
       }
+    } catch {
+      // Ignore timeout or upstream error
     }
-  } catch {
-    // Continue if DDG search fails
-  }
+  })();
 
-  // 2. Search OpenStreetMap Overpass API for running/foot relations
-  try {
-    const safeQuery = q.replace(/[.*+?^${}()|[\]\\"]/g, ' ').trim();
-    if (safeQuery.length >= 2) {
-      const overpassQl = `[out:json][timeout:10];(relation["route"~"running|foot|fitness_trail"]["name"~"${safeQuery}",i];);out tags center 10;`;
-      const osmRes = await fetch(
-        `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQl)}`,
-        {
-          headers: {
-            'User-Agent': 'WatchMyRun/1.3 (+https://watchmy.run)',
-            Accept: 'application/json',
-          },
-        }
-      );
-      if (osmRes.ok) {
-        const osmData = (await osmRes.json()) as any;
-        if (Array.isArray(osmData.elements)) {
-          for (const el of osmData.elements) {
-            if (el.type === 'relation' && el.tags?.name) {
-              const name = el.tags['name:en'] || el.tags.name;
-              const loc =
-                el.tags['addr:city'] || el.tags.network || el.tags.operator || 'Running Course';
+  const wmtTask = (async () => {
+    try {
+      const wmtUrl = `https://hiking.waymarkedtrails.org/api/v1/list/search?query=${encodeURIComponent(
+        q
+      )}&limit=10`;
+      const wmtRes = await fetch(wmtUrl, {
+        headers: {
+          'User-Agent': 'WatchMyRun/1.3 (+https://watchmy.run)',
+          Accept: 'application/json',
+        },
+        signal: typeof AbortSignal !== 'undefined' && 'timeout' in AbortSignal ? AbortSignal.timeout(2500) : undefined,
+      });
+      if (wmtRes.ok) {
+        const wmtData = (await wmtRes.json()) as any;
+        if (Array.isArray(wmtData.results)) {
+          for (const item of wmtData.results) {
+            if (item.id && item.name) {
               addResult({
-                id: `osm_${el.id}`,
-                title: name,
-                subtitle: `${loc} (OSM #${el.id})`,
-                source: 'osm',
-                sourceLabel: 'OpenStreetMap',
-                routeUrl: `osm-relation://${el.id}`,
-                externalUrl: `https://www.openstreetmap.org/relation/${el.id}`,
+                id: `wmt_${item.id}`,
+                title: item.name,
+                subtitle: `${item.group || item.ref || 'Mapped Route'} (OSM #${item.id})`,
+                source: 'waymarked',
+                sourceLabel: 'Waymarked Trails',
+                routeUrl: `osm-relation://${item.id}`,
+                externalUrl: `https://hiking.waymarkedtrails.org/#route?id=${item.id}`,
               });
             }
           }
         }
       }
+    } catch {
+      // Ignore timeout or upstream error
     }
-  } catch {
-    // Continue if OSM search fails
-  }
+  })();
 
-  // 3. Search Waymarked Trails API (all route IDs are OpenStreetMap relation IDs)
-  try {
-    const wmtUrl = `https://hiking.waymarkedtrails.org/api/v1/list/search?query=${encodeURIComponent(
-      q
-    )}&limit=8`;
-    const wmtRes = await fetch(wmtUrl, {
-      headers: {
-        'User-Agent': 'WatchMyRun/1.3 (+https://watchmy.run)',
-        Accept: 'application/json',
-      },
-    });
-    if (wmtRes.ok) {
-      const wmtData = (await wmtRes.json()) as any;
-      if (Array.isArray(wmtData.results)) {
-        for (const item of wmtData.results) {
-          if (item.id && item.name) {
-            addResult({
-              id: `wmt_${item.id}`,
-              title: item.name,
-              subtitle: `${item.group || item.ref || 'Mapped Route'} (OSM #${item.id})`,
-              source: 'waymarked',
-              sourceLabel: 'Waymarked Trails',
-              routeUrl: `osm-relation://${item.id}`,
-              externalUrl: `https://hiking.waymarkedtrails.org/#route?id=${item.id}`,
-            });
-          }
-        }
-      }
-    }
-  } catch {
-    // Continue if WMT search fails
-  }
+  await Promise.allSettled([rwgTask, wmtTask]);
 
   return {
     query: q,

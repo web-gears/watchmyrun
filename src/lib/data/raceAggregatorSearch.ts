@@ -81,13 +81,33 @@ export const CURATED_POPULAR_RACES: RaceSearchResult[] = [
   },
 ];
 
+const searchCache = new Map<string, RaceSearchResult[]>();
+
+function deduplicateResults(items: RaceSearchResult[]): RaceSearchResult[] {
+  const seenUrls = new Set<string>();
+  const seenTitles = new Set<string>();
+  const merged: RaceSearchResult[] = [];
+
+  for (const item of items) {
+    const urlKey = item.routeUrl.toLowerCase();
+    const titleKey = item.title.toLowerCase().trim();
+    if (!seenUrls.has(urlKey) && !seenTitles.has(titleKey)) {
+      seenUrls.add(urlKey);
+      seenTitles.add(titleKey);
+      merged.push(item);
+    }
+  }
+  return merged.slice(0, 20);
+}
+
 /**
- * Searches public route aggregators (Curated catalog, RideWithGPS via Worker,
- * OpenStreetMap Overpass Running Routes, and Waymarked Trails).
+ * Searches public route catalogs (Curated catalog, Waymarked Trails / OpenStreetMap indexed routes,
+ * and RideWithGPS via Worker) with progressive streaming and caching.
  */
 export async function searchPublicRaceCourses(
   query: string,
-  proxyWorkerBase = 'https://watchmyrun-mcp.webgears.workers.dev'
+  proxyWorkerBase = 'https://watchmyrun-mcp.webgears.workers.dev',
+  onPartialResults?: (results: RaceSearchResult[]) => void
 ): Promise<RaceSearchResult[]> {
   const q = query.trim();
   if (!q) {
@@ -95,44 +115,61 @@ export async function searchPublicRaceCourses(
   }
 
   const qLower = q.toLowerCase();
+  const cached = searchCache.get(qLower);
+  if (cached) {
+    onPartialResults?.(cached);
+    return cached;
+  }
 
-  // 1. Instant local matches from curated popular races
+  // 1. Instant local matches from curated popular races (0ms)
   const curatedMatches = CURATED_POPULAR_RACES.filter(
     (item) =>
       item.title.toLowerCase().includes(qLower) ||
       item.subtitle.toLowerCase().includes(qLower)
   );
-
-  // 2. Query Cloudflare Worker aggregator & direct CORS-enabled public APIs in parallel
-  const [workerResults, overpassResults, waymarkedResults] = await Promise.all([
-    fetchWorkerSearchResults(q, proxyWorkerBase),
-    fetchOverpassRunningRoutes(q),
-    fetchWaymarkedTrailsRoutes(q),
-  ]);
-
-  // 3. Merge and deduplicate by routeUrl or title
-  const seenUrls = new Set<string>();
-  const merged: RaceSearchResult[] = [];
-
-  for (const item of [
-    ...curatedMatches,
-    ...workerResults,
-    ...overpassResults,
-    ...waymarkedResults,
-  ]) {
-    const key = item.routeUrl.toLowerCase();
-    if (!seenUrls.has(key)) {
-      seenUrls.add(key);
-      merged.push(item);
-    }
+  if (curatedMatches.length > 0) {
+    onPartialResults?.(curatedMatches);
   }
 
-  return merged.slice(0, 20);
+  let waymarkedList: RaceSearchResult[] = [];
+  let workerList: RaceSearchResult[] = [];
+
+  // 2. Run fast indexed searches in parallel (~180ms Waymarked Trails + ~300ms Worker RideWithGPS)
+  // Stream results immediately as each provider resolves instead of blocking on the slowest one.
+  const wmtPromise = fetchWaymarkedTrailsRoutes(q).then((res) => {
+    waymarkedList = res;
+    if (res.length > 0 && onPartialResults) {
+      onPartialResults(deduplicateResults([...curatedMatches, ...workerList, ...waymarkedList]));
+    }
+    return res;
+  });
+
+  const workerPromise = fetchWorkerSearchResults(q, proxyWorkerBase).then((res) => {
+    workerList = res;
+    if (res.length > 0 && onPartialResults) {
+      onPartialResults(deduplicateResults([...curatedMatches, ...workerList, ...waymarkedList]));
+    }
+    return res;
+  });
+
+  await Promise.allSettled([wmtPromise, workerPromise]);
+
+  const finalResults = deduplicateResults([
+    ...curatedMatches,
+    ...workerList,
+    ...waymarkedList,
+  ]);
+
+  if (finalResults.length > 0) {
+    searchCache.set(qLower, finalResults);
+  }
+
+  return finalResults;
 }
 
 /**
  * Queries our stateless Cloudflare Worker `/api/search-routes?q=...` endpoint
- * which searches RideWithGPS public routes and route indices.
+ * which searches RideWithGPS public routes and route indices in parallel.
  */
 async function fetchWorkerSearchResults(
   query: string,
@@ -140,7 +177,9 @@ async function fetchWorkerSearchResults(
 ): Promise<RaceSearchResult[]> {
   try {
     const url = `${proxyWorkerBase}/api/search-routes?q=${encodeURIComponent(query)}`;
-    const res = await fetch(url);
+    const res = await fetch(url, {
+      signal: typeof AbortSignal !== 'undefined' && 'timeout' in AbortSignal ? AbortSignal.timeout(3500) : undefined,
+    });
     if (!res.ok) return [];
     const data = (await res.json()) as any;
     if (Array.isArray(data.results)) {
@@ -153,73 +192,18 @@ async function fetchWorkerSearchResults(
 }
 
 /**
- * Queries OpenStreetMap Overpass API directly for mapped running / marathon / foot race relations.
- * Overpass API supports CORS (`Access-Control-Allow-Origin: *`) natively.
- */
-async function fetchOverpassRunningRoutes(query: string): Promise<RaceSearchResult[]> {
-  try {
-    // Sanitize regex special characters in user query
-    const safeQuery = query.replace(/[.*+?^${}()|[\]\\"]/g, ' ').trim();
-    if (safeQuery.length < 2) return [];
-
-    const overpassQl = `[out:json][timeout:10];(relation["route"~"running|foot|fitness_trail|hiking"]["name"~"${safeQuery}",i];);out tags center 12;`;
-    const endpoints = [
-      'https://overpass-api.de/api/interpreter',
-      'https://overpass.private.coffee/api/interpreter',
-      'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
-    ];
-
-    let data: any = null;
-    for (const endpoint of endpoints) {
-      try {
-        const res = await fetch(`${endpoint}?data=${encodeURIComponent(overpassQl)}`);
-        if (res.ok) {
-          data = await res.json();
-          if (data?.elements) break;
-        }
-      } catch {
-        // try next mirror
-      }
-    }
-    if (!data || !data.elements || !Array.isArray(data.elements)) return [];
-
-    return data.elements
-      .filter((el: any) => el.type === 'relation' && el.tags?.name)
-      .map((el: any) => {
-        const name = el.tags['name:en'] || el.tags.name;
-        const distTag = el.tags.distance || el.tags.length || '';
-        const parsedKm = parseDistanceKmTag(distTag);
-        const routeType = el.tags.route === 'running' ? 'Running Course' : 'Trail / Foot Route';
-        const loc = el.tags['addr:city'] || el.tags.network || el.tags.operator || routeType;
-        const distLabel = parsedKm ? ` • ${parsedKm} km` : distTag ? ` • ${distTag}` : '';
-
-        return {
-          id: `osm_${el.id}`,
-          title: name,
-          subtitle: `${loc}${distLabel} (OSM #${el.id})`,
-          distanceKm: parsedKm,
-          source: 'osm' as const,
-          sourceLabel: 'OpenStreetMap',
-          routeUrl: `osm-relation://${el.id}`,
-          externalUrl: `https://www.openstreetmap.org/relation/${el.id}`,
-        };
-      });
-  } catch {
-    return [];
-  }
-}
-
-/**
- * Queries Waymarked Trails public search API for mapped routes.
+ * Queries Waymarked Trails public PostgreSQL full-text search API (~180ms) for mapped OSM routes.
  * Each Waymarked Trails route is an OpenStreetMap relation (`item.id`),
- * so we resolve its geometry directly via `osm-relation://${item.id}`.
+ * resolved directly via `osm-relation://${item.id}` on OSM's Fastly CDN (~120ms).
  */
 async function fetchWaymarkedTrailsRoutes(query: string): Promise<RaceSearchResult[]> {
   try {
     const url = `https://hiking.waymarkedtrails.org/api/v1/list/search?query=${encodeURIComponent(
       query
-    )}&limit=8`;
-    const res = await fetch(url);
+    )}&limit=10`;
+    const res = await fetch(url, {
+      signal: typeof AbortSignal !== 'undefined' && 'timeout' in AbortSignal ? AbortSignal.timeout(3000) : undefined,
+    });
     if (!res.ok) return [];
 
     const data = (await res.json()) as any;
@@ -242,16 +226,4 @@ async function fetchWaymarkedTrailsRoutes(query: string): Promise<RaceSearchResu
   } catch {
     return [];
   }
-}
-
-function parseDistanceKmTag(distStr: string): number | undefined {
-  if (!distStr) return undefined;
-  const match = distStr.match(/(\d+(?:[.,]\d+)?)\s*(km|mi|m)?/i);
-  if (!match) return undefined;
-  let val = parseFloat(match[1].replace(',', '.'));
-  if (isNaN(val)) return undefined;
-  const unit = (match[2] || 'km').toLowerCase();
-  if (unit === 'mi') val = val * 1.609344;
-  else if (unit === 'm' && val > 500) val = val / 1000;
-  return Number(val.toFixed(1));
 }

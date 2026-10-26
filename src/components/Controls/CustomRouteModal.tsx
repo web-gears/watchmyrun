@@ -71,16 +71,19 @@ export function CustomRouteModal({
   const [sourceUrl, setSourceUrl] = useState<string | undefined>(undefined);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Load curated popular races on mount of the modal (lazy dynamic import)
+  // Load curated popular races and pre-warm parser chunk on modal open
   useEffect(() => {
-    if (opened && searchResults.length === 0 && !hasSearched) {
-      import('@/lib/data/raceAggregatorSearch').then(({ CURATED_POPULAR_RACES }) => {
-        setSearchResults(CURATED_POPULAR_RACES);
-      });
+    if (opened) {
+      import('@/lib/data/customTrackParser').catch(() => {});
+      if (searchResults.length === 0 && !hasSearched) {
+        import('@/lib/data/raceAggregatorSearch').then(({ CURATED_POPULAR_RACES }) => {
+          setSearchResults(CURATED_POPULAR_RACES);
+        });
+      }
     }
   }, [opened, searchResults.length, hasSearched]);
 
-  // Search public race aggregators
+  // Search public race catalogs with progressive streaming
   const handleSearchCourses = async () => {
     setErrorMsg(null);
     setIsSearching(true);
@@ -94,7 +97,13 @@ export function CustomRouteModal({
         setSearchResults(CURATED_POPULAR_RACES);
         setHasSearched(false);
       } else {
-        const results = await searchPublicRaceCourses(searchQuery.trim());
+        const results = await searchPublicRaceCourses(
+          searchQuery.trim(),
+          undefined,
+          (partialResults) => {
+            setSearchResults(partialResults);
+          }
+        );
         setSearchResults(results);
       }
     } catch (err: unknown) {

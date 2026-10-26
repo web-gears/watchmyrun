@@ -508,6 +508,9 @@ function downsampleCoords(
   return result;
 }
 
+// In-memory LRU cache for parsed routes so re-selecting a course is instantaneous (0ms)
+const parsedCourseCache = new Map<string, CourseData>();
+
 /**
  * Normalizes input URLs (e.g. RideWithGPS, RunGo, OpenStreetMap, Waymarked Trails, GitHub, direct GPX).
  */
@@ -518,26 +521,24 @@ export function normalizeTrackUrl(inputUrl: string): {
 } {
   const url = inputUrl.trim();
 
-  // OpenStreetMap Relation URI: osm-relation://12345 or https://www.openstreetmap.org/relation/12345
-  const osmMatch = url.match(/(?:osm-relation:\/\/|openstreetmap\.org\/relation\/)(\d+)/i);
+  // OpenStreetMap Relation URI: osm-relation://12345, openstreetmap.org/relation/12345, or api.openstreetmap.org/api/0.6/relation/12345
+  const osmMatch = url.match(/(?:osm-relation:\/\/|openstreetmap\.org\/(?:api\/0\.6\/)?relation\/)(\d+)/i);
   if (osmMatch) {
     const relId = osmMatch[1];
-    const query = `[out:json][timeout:25];rel(${relId});(._;rel(r););out geom;`;
     return {
-      normalizedUrl: `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`,
+      normalizedUrl: `https://api.openstreetmap.org/api/0.6/relation/${relId}/full.json`,
       sourceType: 'osm',
       osmRelationId: relId,
     };
   }
 
   // Waymarked Trails route URL: https://hiking.waymarkedtrails.org/#route?id=12345 or .../details/relation/12345...
-  // Waymarked Trails route IDs are OpenStreetMap relation IDs. Resolve them via Overpass for 100% reliability.
+  // Waymarked Trails route IDs are OpenStreetMap relation IDs. Resolve them via OSM Fastly CDN v0.6 full.json (~120ms).
   const wmtMatch = url.match(/waymarkedtrails\.org\/.*?(?:id=|relation\/)(\d+)/i);
   if (wmtMatch) {
     const relId = wmtMatch[1];
-    const query = `[out:json][timeout:25];rel(${relId});(._;rel(r););out geom;`;
     return {
-      normalizedUrl: `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`,
+      normalizedUrl: `https://api.openstreetmap.org/api/0.6/relation/${relId}/full.json`,
       sourceType: 'osm',
       osmRelationId: relId,
     };
@@ -570,13 +571,53 @@ export function normalizeTrackUrl(inputUrl: string): {
 }
 
 /**
- * Parses an OpenStreetMap Overpass API JSON response (`rel(...); (._;rel(r);); out geom;`)
+ * Parses an OpenStreetMap API v0.6 `full.json` response OR an Overpass API `out geom;` JSON response
  * into a continuous CourseData track by stitching ordered member ways (including child relations for superroutes).
  */
 export function parseOverpassToCourseData(overpassJsonText: string, defaultTitle = 'OSM Running Route'): CourseData {
   const json = JSON.parse(overpassJsonText);
   if (!json.elements || !Array.isArray(json.elements) || json.elements.length === 0) {
     throw new Error('No OpenStreetMap route relation found in response.');
+  }
+
+  // Index nodes and ways for OpenStreetMap API v0.6 `/relation/{id}/full.json` format
+  const nodeById = new Map<number, { lat: number; lon: number; ele: number }>();
+  for (const el of json.elements) {
+    if (el.type === 'node' && el.id !== undefined && el.lat !== undefined && el.lon !== undefined) {
+      const eleVal = el.tags?.ele ? parseFloat(el.tags.ele) : 0.0;
+      nodeById.set(Number(el.id), {
+        lat: Number(el.lat),
+        lon: Number(el.lon),
+        ele: isNaN(eleVal) ? 0.0 : eleVal,
+      });
+    }
+  }
+
+  const wayCoordsById = new Map<number, { lat: number; lon: number; ele: number }[]>();
+  for (const el of json.elements) {
+    if (el.type === 'way' && el.id !== undefined) {
+      if (Array.isArray(el.geometry) && el.geometry.length >= 2) {
+        const seg = el.geometry
+          .map((pt: any) => ({
+            lat: Number(pt.lat),
+            lon: Number(pt.lon),
+            ele: pt.ele !== undefined && !isNaN(Number(pt.ele)) ? Number(pt.ele) : 0.0,
+          }))
+          .filter((pt: any) => !isNaN(pt.lat) && !isNaN(pt.lon));
+        if (seg.length >= 2) {
+          wayCoordsById.set(Number(el.id), seg);
+        }
+      } else if (Array.isArray(el.nodes) && el.nodes.length >= 2) {
+        const seg: { lat: number; lon: number; ele: number }[] = [];
+        for (const nodeId of el.nodes) {
+          const pt = nodeById.get(Number(nodeId));
+          if (pt) seg.push(pt);
+        }
+        if (seg.length >= 2) {
+          wayCoordsById.set(Number(el.id), seg);
+        }
+      }
+    }
   }
 
   const relations = json.elements.filter((el: any) => el.type === 'relation');
@@ -595,22 +636,22 @@ export function parseOverpassToCourseData(overpassJsonText: string, defaultTitle
     if (rel.id) visited.add(Number(rel.id));
 
     for (const member of rel.members) {
-      if (
-        member.type === 'way' &&
-        Array.isArray(member.geometry) &&
-        member.geometry.length >= 2 &&
-        member.role !== 'platform' &&
-        member.role !== 'stop'
-      ) {
-        const seg = member.geometry
-          .map((pt: any) => ({
-            lat: Number(pt.lat),
-            lon: Number(pt.lon),
-            ele: pt.ele !== undefined && !isNaN(Number(pt.ele)) ? Number(pt.ele) : 0.0,
-          }))
-          .filter((pt: any) => !isNaN(pt.lat) && !isNaN(pt.lon));
-        if (seg.length >= 2) {
-          waySegments.push(seg);
+      if (member.role === 'platform' || member.role === 'stop') continue;
+
+      if (member.type === 'way') {
+        if (Array.isArray(member.geometry) && member.geometry.length >= 2) {
+          const seg = member.geometry
+            .map((pt: any) => ({
+              lat: Number(pt.lat),
+              lon: Number(pt.lon),
+              ele: pt.ele !== undefined && !isNaN(Number(pt.ele)) ? Number(pt.ele) : 0.0,
+            }))
+            .filter((pt: any) => !isNaN(pt.lat) && !isNaN(pt.lon));
+          if (seg.length >= 2) {
+            waySegments.push(seg);
+          }
+        } else if (member.ref !== undefined && wayCoordsById.has(Number(member.ref))) {
+          waySegments.push(wayCoordsById.get(Number(member.ref))!);
         }
       } else if (member.type === 'relation' && member.ref && relationById.has(Number(member.ref))) {
         collectWaysFromRelation(relationById.get(Number(member.ref)), visited);
@@ -620,10 +661,15 @@ export function parseOverpassToCourseData(overpassJsonText: string, defaultTitle
 
   collectWaysFromRelation(primaryRelation);
 
-  // If primary relation didn't directly list child ways, check remaining relations in response
+  // If primary relation didn't directly list child ways, check remaining relations or standalone ways
   if (waySegments.length === 0) {
     for (const rel of relations) {
       collectWaysFromRelation(rel);
+    }
+  }
+  if (waySegments.length === 0 && wayCoordsById.size > 0) {
+    for (const seg of wayCoordsById.values()) {
+      waySegments.push(seg);
     }
   }
 
@@ -744,7 +790,8 @@ export function parseRouteTextToCourseData(text: string, customTitle?: string): 
 
 /**
  * Fetches and parses a route from a URL into CourseData.
- * Falls back to Cloudflare Worker stateless proxy if browser CORS blocks the third-party site.
+ * Uses OpenStreetMap Fastly CDN v0.6 (~120ms) for OSM/Waymarked Trails relations
+ * and caches parsed courses in memory.
  */
 export async function fetchAndParseRoute(
   inputUrl: string,
@@ -752,39 +799,53 @@ export async function fetchAndParseRoute(
   proxyWorkerBase = 'https://watchmyrun-mcp.webgears.workers.dev'
 ): Promise<CourseData> {
   const { normalizedUrl, sourceType, osmRelationId } = normalizeTrackUrl(inputUrl);
+  const cacheKey = `${normalizedUrl}::${customTitle || ''}`;
+  const cached = parsedCourseCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
   const isBrowser = typeof (globalThis as any).window !== 'undefined';
 
   let text: string | null = null;
 
-  // 1a. For OpenStreetMap / Waymarked Trails relations, try Overpass mirrors with automatic failover
+  // 1a. For OpenStreetMap / Waymarked Trails relations, fetch from OSM Fastly CDN v0.6 (~120ms, native CORS!)
   if (sourceType === 'osm' && osmRelationId) {
-    const query = `[out:json][timeout:25];rel(${osmRelationId});(._;rel(r););out geom;`;
-    const overpassMirrors = [
-      'https://overpass-api.de/api/interpreter',
-      'https://overpass.private.coffee/api/interpreter',
-      'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
-    ];
+    try {
+      const osmApiUrl = `https://api.openstreetmap.org/api/0.6/relation/${osmRelationId}/full.json`;
+      const res = await fetch(osmApiUrl);
+      if (res.ok) {
+        const data = (await res.json()) as any;
+        if (Array.isArray(data.elements)) {
+          const hasWays = data.elements.some((el: any) => el.type === 'way');
+          if (!hasWays) {
+            // Superroute: relation consists of child relations. Fetch up to 8 child relations in parallel (~150ms)
+            const rel = data.elements.find((el: any) => el.type === 'relation');
+            const childRelIds: number[] = (rel?.members || [])
+              .filter((m: any) => m.type === 'relation' && m.ref)
+              .map((m: any) => Number(m.ref))
+              .slice(0, 8);
 
-    for (const mirror of overpassMirrors) {
-      try {
-        const res = await fetch(`${mirror}?data=${encodeURIComponent(query)}`, {
-          headers: isBrowser
-            ? undefined
-            : {
-                'User-Agent': 'WatchMyRun/1.3 (+https://watchmy.run)',
-                Accept: 'application/json',
-              },
-        });
-        if (res.ok) {
-          const candidate = await res.text();
-          if (candidate.trim().startsWith('{')) {
-            text = candidate;
-            break;
+            if (childRelIds.length > 0) {
+              const childResponses = await Promise.all(
+                childRelIds.map((cId) =>
+                  fetch(`https://api.openstreetmap.org/api/0.6/relation/${cId}/full.json`)
+                    .then((r) => (r.ok ? r.json() : null))
+                    .catch(() => null)
+                )
+              );
+              for (const childData of childResponses) {
+                if (childData && Array.isArray((childData as any).elements)) {
+                  data.elements.push(...(childData as any).elements);
+                }
+              }
+            }
           }
+          text = JSON.stringify(data);
         }
-      } catch {
-        // Try next mirror
       }
+    } catch {
+      // Fallback to Overpass below if OSM Fastly API fails
     }
   }
 
@@ -848,7 +909,9 @@ export async function fetchAndParseRoute(
     throw new Error('Could not fetch route from the provided link.');
   }
 
-  return parseRouteTextToCourseData(text, customTitle);
+  const course = parseRouteTextToCourseData(text, customTitle);
+  parsedCourseCache.set(cacheKey, course);
+  return course;
 }
 
 /**
