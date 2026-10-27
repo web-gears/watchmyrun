@@ -1,97 +1,220 @@
 'use client';
 
 import { useState } from 'react';
-import { Popover, Tooltip, ActionIcon, Group, Text } from '@mantine/core';
-import { IconShare, IconCheck } from '@tabler/icons-react';
+import {
+  Popover,
+  Tooltip,
+  ActionIcon,
+  Group,
+  Text,
+  Stack,
+  Button,
+  Box,
+  Divider,
+} from '@mantine/core';
+import {
+  IconShare,
+  IconCheck,
+  IconLink,
+  IconMessageShare,
+  IconSend,
+} from '@tabler/icons-react';
+import { SharePlanData, formatSpectatorCheatSheet } from '@/lib/share/formatSpectatorPlan';
 
 interface ShareButtonProps {
   shareUrl: string;
+  sharePlanData?: Omit<SharePlanData, 'shareUrl'>;
 }
 
-export function ShareButton({ shareUrl }: ShareButtonProps) {
-  const [copied, setCopied] = useState(false);
+async function copyTextToClipboard(text: string): Promise<void> {
+  let success = false;
+  try {
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      success = true;
+    }
+  } catch {
+    // Fallback below
+  }
 
-  const handleShare = async () => {
-    const url = shareUrl || (typeof window !== 'undefined' ? window.location.href : '');
+  if (!success && typeof document !== 'undefined') {
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-9999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+    } catch {
+      // Ignore
+    }
+  }
+}
 
-    // 1. Try native Web Share on mobile devices (iOS / Android)
+export function ShareButton({ shareUrl, sharePlanData }: ShareButtonProps) {
+  const [opened, setOpened] = useState(false);
+  const [copiedMode, setCopiedMode] = useState<'link' | 'plan' | null>(null);
+
+  const getEffectiveUrl = () =>
+    shareUrl || (typeof window !== 'undefined' ? window.location.href : 'https://watchmy.run');
+
+  const getCheatSheetText = () => {
+    const url = getEffectiveUrl();
+    if (!sharePlanData) return url;
+    return formatSpectatorCheatSheet({
+      ...sharePlanData,
+      shareUrl: url,
+    });
+  };
+
+  const handleCopyLink = async () => {
+    const url = getEffectiveUrl();
+    await copyTextToClipboard(url);
+    setCopiedMode('link');
+    setTimeout(() => {
+      setCopiedMode(null);
+      setOpened(false);
+    }, 1600);
+  };
+
+  const handleCopyPlan = async () => {
+    const text = getCheatSheetText();
+    await copyTextToClipboard(text);
+    setCopiedMode('plan');
+    setTimeout(() => {
+      setCopiedMode(null);
+      setOpened(false);
+    }, 1800);
+  };
+
+  const handleNativeShare = async () => {
+    const url = getEffectiveUrl();
+    const text = getCheatSheetText();
     if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
       try {
         await navigator.share({
-          title: 'WatchMy.Run - Phone-Free Marathon Tracker',
-          text: 'Track marathon runner progress and spectator arrival windows live on WatchMy.Run:',
+          title: sharePlanData
+            ? `${sharePlanData.marathonInfo.name} — Spectator Plan`
+            : 'WatchMy.Run - Phone-Free Marathon Tracker',
+          text,
           url,
         });
-        return;
+        setOpened(false);
       } catch (err) {
-        // If user cancelled native sheet (AbortError), don't show copy toast
         if ((err as Error)?.name === 'AbortError') return;
       }
     }
-
-    // 2. Clipboard API fallback (desktop & unsupported browsers)
-    let success = false;
-    try {
-      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(url);
-        success = true;
-      }
-    } catch {
-      // Clipboard API failed, fallback to textarea
-    }
-
-    if (!success && typeof document !== 'undefined') {
-      try {
-        const textArea = document.createElement('textarea');
-        textArea.value = url;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-9999px';
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-      } catch {
-        // Fallback failed
-      }
-    }
-
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
   };
 
+  const canNativeShare =
+    typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+
+  const spotCount =
+    sharePlanData?.spectatorWindows?.length ||
+    sharePlanData?.spectatorSpots?.length ||
+    0;
+
   return (
-    <Popover opened={copied} position="bottom-end" withArrow shadow="md">
+    <Popover
+      opened={opened}
+      onChange={setOpened}
+      position="bottom-end"
+      withArrow
+      shadow="lg"
+      radius="md"
+      width={276}
+    >
       <Popover.Target>
-        <Tooltip label={copied ? 'Copied to clipboard!' : 'Copy shareable link'}>
+        <Tooltip label="Share link or spectator plan" disabled={opened}>
           <ActionIcon
             size="lg"
-            variant={copied ? 'filled' : 'default'}
+            variant={copiedMode ? 'filled' : opened ? 'light' : 'default'}
             radius="md"
-            onClick={handleShare}
-            color={copied ? 'teal' : undefined}
-            aria-label="Share race tracking link"
+            onClick={() => setOpened((o) => !o)}
+            color={copiedMode ? 'teal' : opened ? 'cyan' : undefined}
+            aria-label="Share race tracking link or spectator cheat sheet"
             style={{ minWidth: 44, minHeight: 44 }}
           >
-            {copied ? <IconCheck size={20} color="white" /> : <IconShare size={20} />}
+            {copiedMode ? <IconCheck size={20} color="white" /> : <IconShare size={20} />}
           </ActionIcon>
         </Tooltip>
       </Popover.Target>
-      <Popover.Dropdown
-        style={{
-          background: '#10b981',
-          color: '#ffffff',
-          border: 'none',
-          padding: '6px 12px',
-          boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
-        }}
-      >
-        <Group gap={6} wrap="nowrap">
-          <IconCheck size={15} stroke={3} />
-          <Text size="xs" fw={700} c="white">
-            Link copied to clipboard!
-          </Text>
-        </Group>
+
+      <Popover.Dropdown p="xs">
+        <Stack gap={6}>
+          <Box px={4} py={2}>
+            <Text size="xs" fw={700}>
+              Share Race & Spectator Plan
+            </Text>
+            <Text size="11px" c="dimmed">
+              Send to your family or group chat
+            </Text>
+          </Box>
+
+          {/* Option 1: Copy Spectator Cheat Sheet (Formatted for WhatsApp / iMessage) */}
+          <Button
+            variant={copiedMode === 'plan' ? 'filled' : 'light'}
+            color={copiedMode === 'plan' ? 'teal' : 'cyan'}
+            size="xs"
+            radius="sm"
+            fullWidth
+            justify="flex-start"
+            leftSection={
+              copiedMode === 'plan' ? <IconCheck size={15} /> : <IconMessageShare size={15} />
+            }
+            onClick={handleCopyPlan}
+            styles={{
+              root: { height: 38 },
+              inner: { justifyContent: 'flex-start' },
+            }}
+          >
+            {copiedMode === 'plan'
+              ? 'Copied Spectator Cheat Sheet!'
+              : spotCount > 0
+              ? `Copy Spectator Cheat Sheet (${spotCount} ${spotCount === 1 ? 'spot' : 'spots'})`
+              : 'Copy Spectator Cheat Sheet'}
+          </Button>
+
+          {/* Option 2: Copy Direct URL */}
+          <Button
+            variant={copiedMode === 'link' ? 'filled' : 'default'}
+            color={copiedMode === 'link' ? 'teal' : undefined}
+            size="xs"
+            radius="sm"
+            fullWidth
+            justify="flex-start"
+            leftSection={
+              copiedMode === 'link' ? <IconCheck size={15} /> : <IconLink size={15} />
+            }
+            onClick={handleCopyLink}
+            styles={{
+              root: { height: 36 },
+              inner: { justifyContent: 'flex-start' },
+            }}
+          >
+            {copiedMode === 'link' ? 'Link copied to clipboard!' : 'Copy Direct Map Link'}
+          </Button>
+
+          {/* Option 3: Native Share Sheet on Mobile */}
+          {canNativeShare && (
+            <>
+              <Divider my={2} />
+              <Button
+                variant="subtle"
+                color="gray"
+                size="compact-xs"
+                fullWidth
+                leftSection={<IconSend size={13} />}
+                onClick={handleNativeShare}
+              >
+                More Share Options…
+              </Button>
+            </>
+          )}
+        </Stack>
       </Popover.Dropdown>
     </Popover>
   );

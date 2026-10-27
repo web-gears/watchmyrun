@@ -1,6 +1,37 @@
-# Follow Me Running: World Major Marathons Course Datasets & Runner Forecasting Engine
+# WatchMy.Run — Phone-Free Marathon Tracker, Spectator Planner & MCP Server
 
-A geospatial dataset collection and forecasting engine for the **TCS New York City Marathon** and the **World Marathon Majors** (Boston, Chicago, London, Berlin, Tokyo). Designed to calculate, predict, and project runner live coordinates, pacing splits, and spectator ETA windows along official courses.
+[![Live App](https://img.shields.io/badge/Live_App-watchmy.run-0284c7?style=flat-square)](https://watchmy.run)
+[![MCP Server](https://img.shields.io/badge/MCP_Server-Live_24%2F7-10b981?style=flat-square)](https://watchmyrun-mcp.webgears.workers.dev/mcp)
+[![OpenAPI 3.1](https://img.shields.io/badge/OpenAPI_3.1-Spec-38bdf8?style=flat-square)](https://watchmyrun-mcp.webgears.workers.dev/openapi.json)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
+
+A geospatial dataset collection, web application, and **Model Context Protocol (MCP)** forecasting engine for the **6 World Marathon Majors** (New York City, Boston, Chicago, London, Berlin, Tokyo) and **any custom running course worldwide** (GPX, Garmin FIT, TCX, GeoJSON, OpenStreetMap, Waymarked Trails, RideWithGPS). Designed to calculate, predict, and project runner live coordinates, pacing splits, and spectator cheer spot arrival windows without requiring the runner to carry a phone.
+
+---
+
+## 🤖 Hosted MCP Server & OpenAPI Integration
+
+WatchMy.Run includes a 24/7 serverless MCP & OpenAPI server on Cloudflare Workers ([`mcp-worker/`](mcp-worker/README.md)).
+
+### Connect in Claude Desktop / Cursor / Windsurf / Cline
+```json
+{
+  "mcpServers": {
+    "watchmyrun": {
+      "url": "https://watchmyrun-mcp.webgears.workers.dev/mcp"
+    }
+  }
+}
+```
+
+### Available MCP Tools (7 Tools)
+1. `list_marathons` — Official distances, dates, start waves, and elevation profiles for the 6 World Marathon Majors.
+2. `search_race_courses` — Search worldwide road & trail courses across curated marathons, OpenStreetMap route relations, Waymarked Trails, and RideWithGPS.
+3. `get_course_landmarks` — Retrieve split timing mats, cheer spot presets, and elevation summaries for any major or custom course.
+4. `calculate_runner_forecast` — Calculate live runner position, grade-adjusted pace, and projected finish time.
+5. `get_cheer_spot_windows` — Calculate spectator arrival windows (`windowEarly` – `windowLate`) for any mile, km, or landmark along the route.
+6. `add_tracking_pin` — Snap an on-course sighting coordinate or Apple AirTag ping to the course geometry and recalibrate downstream pace.
+7. `generate_race_url` — Generate a shareable `https://watchmy.run/?race=...` link with all cheer spots and tracking pins pre-loaded.
 
 ---
 

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import {
   Card,
   Group,
@@ -17,6 +18,7 @@ import {
   IconCheck,
   IconTrash,
   IconClock,
+  IconCopy,
 } from '@tabler/icons-react';
 import { SpectatorMeetingWindow } from '@/lib/forecasting/types';
 
@@ -24,13 +26,24 @@ interface DesktopSpectatorCardProps {
   windows: SpectatorMeetingWindow[];
   onClose: () => void;
   onRemoveSpot?: (spotId: string) => void;
+  onCopyCheatSheet?: () => void;
 }
 
 export function DesktopSpectatorCard({
   windows,
   onClose,
   onRemoveSpot,
+  onCopyCheatSheet,
 }: DesktopSpectatorCardProps) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    if (!onCopyCheatSheet) return;
+    onCopyCheatSheet();
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   // Find the next upcoming cheer station (closest spot where runner has not yet passed)
   const nextSpot = windows.find((w) => !w.hasRunnerPassed) || windows[windows.length - 1];
 
@@ -59,12 +72,28 @@ export function DesktopSpectatorCard({
             {windows.length} {windows.length === 1 ? 'spot' : 'spots'}
           </Badge>
         </Group>
-        <CloseButton
-          size="sm"
-          onClick={onClose}
-          aria-label="Close cheer stations"
-          style={{ minWidth: 36, minHeight: 36 }}
-        />
+        <Group gap={4} wrap="nowrap">
+          {onCopyCheatSheet && (
+            <Tooltip label={copied ? 'Copied spectator cheat sheet!' : 'Copy spectator cheat sheet for WhatsApp / iMessage'}>
+              <ActionIcon
+                size="sm"
+                variant={copied ? 'filled' : 'subtle'}
+                color={copied ? 'teal' : 'amber'}
+                onClick={handleCopy}
+                aria-label="Copy spectator cheat sheet"
+                style={{ minWidth: 36, minHeight: 36 }}
+              >
+                {copied ? <IconCheck size={15} /> : <IconCopy size={15} />}
+              </ActionIcon>
+            </Tooltip>
+          )}
+          <CloseButton
+            size="sm"
+            onClick={onClose}
+            aria-label="Close cheer stations"
+            style={{ minWidth: 36, minHeight: 36 }}
+          />
+        </Group>
       </Group>
 
       {/* Highlight Next Upcoming Spot */}

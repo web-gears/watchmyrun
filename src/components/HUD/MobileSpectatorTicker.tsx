@@ -19,6 +19,7 @@ import {
   IconTrash,
   IconChevronDown,
   IconChevronUp,
+  IconCopy,
 } from '@tabler/icons-react';
 import { useState } from 'react';
 import { SpectatorMeetingWindow } from '@/lib/forecasting/types';
@@ -27,6 +28,7 @@ export interface MobileSpectatorTickerProps {
   windows: SpectatorMeetingWindow[];
   onClose: () => void;
   onRemoveSpot?: (spotId: string) => void;
+  onCopyCheatSheet?: () => void;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
 }
@@ -35,11 +37,20 @@ export function MobileSpectatorTicker({
   windows,
   onClose,
   onRemoveSpot,
+  onCopyCheatSheet,
   isExpanded,
   onToggleExpand,
 }: MobileSpectatorTickerProps) {
   const [internalExpanded, setInternalExpanded] = useState(false);
+  const [copied, setCopied] = useState(false);
   const expanded = isExpanded !== undefined ? isExpanded : internalExpanded;
+
+  const handleCopy = () => {
+    if (!onCopyCheatSheet) return;
+    onCopyCheatSheet();
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
   const toggleExpanded = () => {
     if (onToggleExpand) {
       onToggleExpand();
@@ -134,13 +145,28 @@ export function MobileSpectatorTicker({
             <Text size="11px" fw={700} c="dimmed">
               All Monitored Stations ({windows.length}):
             </Text>
-            <CloseButton
-              size="sm"
-              onClick={onClose}
-              aria-label="Clear all cheer stations"
-              title="Clear all cheer stations"
-              style={{ minWidth: 36, minHeight: 36 }}
-            />
+            <Group gap={4} wrap="nowrap">
+              {onCopyCheatSheet && (
+                <ActionIcon
+                  size="sm"
+                  variant={copied ? 'filled' : 'subtle'}
+                  color={copied ? 'teal' : 'amber'}
+                  onClick={handleCopy}
+                  aria-label="Copy spectator cheat sheet"
+                  title="Copy spectator cheat sheet"
+                  style={{ minWidth: 36, minHeight: 36 }}
+                >
+                  {copied ? <IconCheck size={15} /> : <IconCopy size={15} />}
+                </ActionIcon>
+              )}
+              <CloseButton
+                size="sm"
+                onClick={onClose}
+                aria-label="Clear all cheer stations"
+                title="Clear all cheer stations"
+                style={{ minWidth: 36, minHeight: 36 }}
+              />
+            </Group>
           </Group>
 
           <ScrollArea.Autosize mah={220} type="auto" offsetScrollbars>

@@ -21,6 +21,7 @@ import { MarathonInfo } from '@/lib/data/marathonRegistry';
 import { RaceDistanceOption } from '@/lib/data/newYorkCourses';
 import { ThemeToggle } from './ThemeToggle';
 import { ShareButton } from './ShareButton';
+import { SharePlanData } from '@/lib/share/formatSpectatorPlan';
 
 interface AppHeaderProps {
   marathonInfo: MarathonInfo;
@@ -32,6 +33,7 @@ interface AppHeaderProps {
   onOpenPinModal: () => void;
   statusBadgeText?: string;
   shareUrl: string;
+  sharePlanData?: Omit<SharePlanData, 'shareUrl'>;
 }
 
 export function AppHeader({
@@ -44,6 +46,7 @@ export function AppHeader({
   onOpenPinModal,
   statusBadgeText,
   shareUrl,
+  sharePlanData,
 }: AppHeaderProps) {
   return (
     <>
@@ -218,7 +221,7 @@ export function AppHeader({
             </Button>
 
             {/* Share Button with Popover and Tooltip */}
-            <ShareButton shareUrl={shareUrl} />
+            <ShareButton shareUrl={shareUrl} sharePlanData={sharePlanData} />
 
             {/* Running Weather Forecast (Run-Weather.com) */}
             <Tooltip label="Race weather forecast (Run-Weather.com)" position="bottom-end" withArrow>

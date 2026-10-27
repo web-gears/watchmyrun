@@ -1,0 +1,14 @@
+runtime: "container"
+type: "http"
+url: "https://watchmyrun-mcp.webgears.workers.dev/mcp"
+name: "watchmyrun-mcp"
+title: "WatchMy.Run Marathon & Race Spectator Forecaster"
+description: "Calculate live marathon runner positions, elevation-adjusted spectator cheer spot arrival windows, on-course sighting pin pace recalibrations, and shareable map URLs for the 6 World Marathon Majors or any custom GPX/FIT/OpenStreetMap course."
+homepage: "https://watchmy.run"
+repository: "https://github.com/web-gears/watchmyrun"
+license: "MIT"
+startCommand:
+  type: http
+  configSchema:
+    type: object
+    properties: {}

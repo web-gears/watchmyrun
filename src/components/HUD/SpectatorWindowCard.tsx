@@ -9,6 +9,7 @@ export interface SpectatorWindowCardProps {
   meetingWindows?: SpectatorMeetingWindow[];
   onClose: () => void;
   onRemoveSpot?: (spotId: string) => void;
+  onCopyCheatSheet?: () => void;
   isMobile?: boolean;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
@@ -19,6 +20,7 @@ export function SpectatorWindowCard({
   meetingWindows,
   onClose,
   onRemoveSpot,
+  onCopyCheatSheet,
   isMobile = false,
   isExpanded,
   onToggleExpand,
@@ -39,6 +41,7 @@ export function SpectatorWindowCard({
         windows={windows}
         onClose={onClose}
         onRemoveSpot={onRemoveSpot}
+        onCopyCheatSheet={onCopyCheatSheet}
         isExpanded={isExpanded}
         onToggleExpand={onToggleExpand}
       />
@@ -50,6 +53,7 @@ export function SpectatorWindowCard({
       windows={windows}
       onClose={onClose}
       onRemoveSpot={onRemoveSpot}
+      onCopyCheatSheet={onCopyCheatSheet}
     />
   );
 }

@@ -84,6 +84,7 @@ import {
 import { interpolateAtDistance } from '@/lib/forecasting/geodesy';
 import { snapCoordinateToCourse } from '@/lib/forecasting/snapToCourse';
 import { parseUrlState, serializeUrlState } from '@/lib/state/urlState';
+import { formatSpectatorCheatSheet } from '@/lib/share/formatSpectatorPlan';
 
 const LOCAL_STORAGE_MARATHON_KEY = 'follow_me_running_selected_marathon';
 const LOCAL_STORAGE_DISTANCE_KEY = 'follow_me_running_selected_distance';
@@ -756,6 +757,35 @@ export default function MarathonTrackerPage() {
     handleClearAllSpectatorSpots();
   }, [handleClearAllSpectatorSpots]);
 
+  const handleCopyCheatSheet = useCallback(() => {
+    const shareUrl = typeof window !== 'undefined' ? window.location.href : 'https://watchmy.run';
+    const text = formatSpectatorCheatSheet({
+      marathonInfo,
+      distanceLabel: distanceOption.label,
+      startTimeStr,
+      finishTimeStr,
+      paceStr,
+      pacingUnit,
+      forecast,
+      spectatorWindows,
+      spectatorSpots,
+      shareUrl,
+    });
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).catch(() => {});
+    }
+  }, [
+    marathonInfo,
+    distanceOption.label,
+    startTimeStr,
+    finishTimeStr,
+    paceStr,
+    pacingUnit,
+    forecast,
+    spectatorWindows,
+    spectatorSpots,
+  ]);
+
   return (
     <Box
       style={{
@@ -782,6 +812,17 @@ export default function MarathonTrackerPage() {
           forecast ? `Progress: ${forecast.progressPct}%` : 'Awaiting Pace Data'
         }
         shareUrl={typeof window !== 'undefined' ? window.location.href : ''}
+        sharePlanData={{
+          marathonInfo,
+          distanceLabel: distanceOption.label,
+          startTimeStr,
+          finishTimeStr,
+          paceStr,
+          pacingUnit,
+          forecast,
+          spectatorWindows,
+          spectatorSpots,
+        }}
       />
 
       {/* 2. Main Map View & Overlays */}
@@ -997,6 +1038,7 @@ export default function MarathonTrackerPage() {
                 meetingWindows={spectatorWindows}
                 onClose={handleClearAllSpectatorSpots}
                 onRemoveSpot={handleRemoveSpectatorSpot}
+                onCopyCheatSheet={handleCopyCheatSheet}
               />
             </Box>
 
@@ -1016,6 +1058,7 @@ export default function MarathonTrackerPage() {
                 meetingWindows={spectatorWindows}
                 onClose={handleClearAllSpectatorSpots}
                 onRemoveSpot={handleRemoveSpectatorSpot}
+                onCopyCheatSheet={handleCopyCheatSheet}
                 isMobile
                 isExpanded={mobileExpandedPanel === 'top'}
                 onToggleExpand={() =>

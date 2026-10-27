@@ -9,12 +9,36 @@ import { ColorSchemeScript, MantineProvider, createTheme } from '@mantine/core';
 import { AppUpdateNotifier } from '@/components/Common/AppUpdateNotifier';
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://watchmy.run'),
   title: 'WatchMy.Run | Phone-Free Marathon Tracker & Spectator ETAs',
   description:
-    'Phone-free marathon progress and live spectator meeting windows for TCS New York City, Boston, Chicago, London, Berlin, and Tokyo marathons with Apple AirTag support.',
+    'Live marathon runner forecasting, elevation-adjusted spectator cheer spot arrival windows, and on-course sighting pin recalibration for NYC, Boston, Chicago, London, Berlin, Tokyo, and any GPX/FIT course.',
   manifest: '/manifest.json',
   icons: {
     icon: '/icon.svg',
+  },
+  openGraph: {
+    title: 'WatchMy.Run | Phone-Free Marathon Tracker & Spectator ETAs',
+    description:
+      'Know exactly when your runner will pass your cheer spot. Live elevation-adjusted arrival windows and on-course pace recalibration in one link.',
+    url: 'https://watchmy.run',
+    siteName: 'WatchMy.Run',
+    type: 'website',
+    images: [
+      {
+        url: '/og-card.png',
+        width: 1200,
+        height: 630,
+        alt: 'WatchMy.Run — Phone-Free Marathon Tracker & Spectator Planner',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'WatchMy.Run | Phone-Free Marathon Tracker & Spectator ETAs',
+    description:
+      'Know exactly when your runner will pass your cheer spot. Live elevation-adjusted arrival windows and on-course pace recalibration in one link.',
+    images: ['/og-card.png'],
   },
 };
 

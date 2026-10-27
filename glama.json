@@ -1,0 +1,27 @@
+{
+  "name": "WatchMy.Run Marathon Forecaster",
+  "description": "Real-time marathon runner position forecasting, spectator cheer spot arrival windows, on-course sighting pin pace recalibration, and custom GPX/FIT/OSM course search for the 6 World Marathon Majors and any road or trail race worldwide.",
+  "license": "MIT",
+  "author": "WatchMy.Run",
+  "homepage": "https://watchmy.run",
+  "repository": "https://github.com/web-gears/watchmyrun",
+  "endpoints": {
+    "mcp": "https://watchmyrun-mcp.webgears.workers.dev/mcp",
+    "openapi": "https://watchmyrun-mcp.webgears.workers.dev/openapi.json"
+  },
+  "categories": [
+    "sports",
+    "travel",
+    "location",
+    "utilities"
+  ],
+  "tools": [
+    "list_marathons",
+    "search_race_courses",
+    "get_course_landmarks",
+    "calculate_runner_forecast",
+    "get_cheer_spot_windows",
+    "add_tracking_pin",
+    "generate_race_url"
+  ]
+}
