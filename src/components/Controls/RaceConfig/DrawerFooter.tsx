@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Divider, Group, Tooltip, Anchor, Text } from '@mantine/core';
-import { IconCloud, IconCoffee, IconRobot } from '@tabler/icons-react';
+import { IconCloud, IconCoffee, IconRobot, IconMap } from '@tabler/icons-react';
 import { ThemeToggle } from '@/components/Header/ThemeToggle';
 
 export function DrawerFooter() {
@@ -15,7 +15,21 @@ export function DrawerFooter() {
         <ThemeToggle />
       </Group>
       <Divider mb="xs" variant="dashed" />
-      <Group justify="center" gap="xs" wrap="nowrap">
+      <Group justify="center" gap={6} wrap="wrap">
+        <Tooltip label="Marathon Spectator Guides & Cheer Spot Calculators" position="top" withArrow>
+          <Anchor
+            href="/races/"
+            size="11px"
+            c="dimmed"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 3, textDecoration: 'none' }}
+          >
+            <IconMap size={13} stroke={1.8} />
+            Race Guides
+          </Anchor>
+        </Tooltip>
+        <Text size="11px" c="dimmed">
+          •
+        </Text>
         <Tooltip label="Check outside running conditions at Run-Weather.com" position="top" withArrow>
           <Anchor
             href="https://run-weather.com/"
@@ -42,7 +56,7 @@ export function DrawerFooter() {
             style={{ display: 'inline-flex', alignItems: 'center', gap: 3, textDecoration: 'none', fontWeight: 500 }}
           >
             <IconRobot size={13} stroke={1.8} />
-            AI / MCP Server
+            AI / MCP
           </Anchor>
         </Tooltip>
         <Text size="11px" c="dimmed">
@@ -64,7 +78,7 @@ export function DrawerFooter() {
             style={{ display: 'inline-flex', alignItems: 'center', gap: 4, textDecoration: 'none' }}
           >
             <IconCoffee size={13} stroke={2} />
-            Support on Ko-fi
+            Ko-fi
           </Anchor>
         </Tooltip>
       </Group>
