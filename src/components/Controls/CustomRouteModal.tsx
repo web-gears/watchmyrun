@@ -308,26 +308,28 @@ export function CustomRouteModal({
       opened={opened}
       onClose={onClose}
       title={
-        <Group gap="xs">
+        <Group gap="xs" wrap="nowrap" align="flex-start">
           <Box
             style={{
               width: 32,
               height: 32,
+              flexShrink: 0,
               borderRadius: 8,
               background: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: 'white',
+              marginTop: 2,
             }}
           >
             <IconRoute size={20} stroke={2.2} />
           </Box>
-          <div>
-            <Text fw={700} size="md" style={{ lineHeight: 1.1 }}>
+          <div style={{ minWidth: 0 }}>
+            <Text fw={700} size="md" style={{ lineHeight: 1.2 }}>
               Search or Import Race Course
             </Text>
-            <Text size="xs" c="dimmed">
+            <Text size="xs" c="dimmed" mt={2}>
               Find race courses worldwide, upload a GPX/FIT/TCX/GeoJSON file, or paste a route link
             </Text>
           </div>
@@ -391,14 +393,26 @@ export function CustomRouteModal({
         )}
 
         <Tabs value={activeTab} onChange={setActiveTab} variant="pills" radius="md">
-          <Tabs.List grow mb="sm">
-            <Tabs.Tab value="search" leftSection={<IconSearch size={15} />}>
-              Search Courses
+          <Tabs.List grow mb="sm" style={{ flexWrap: 'nowrap', gap: 4 }}>
+            <Tabs.Tab
+              value="search"
+              leftSection={<IconSearch size={14} />}
+              style={{ padding: '8px 10px', fontSize: 13 }}
+            >
+              Search
             </Tabs.Tab>
-            <Tabs.Tab value="file" leftSection={<IconUpload size={15} />}>
+            <Tabs.Tab
+              value="file"
+              leftSection={<IconUpload size={14} />}
+              style={{ padding: '8px 10px', fontSize: 13 }}
+            >
               Upload File
             </Tabs.Tab>
-            <Tabs.Tab value="link" leftSection={<IconLink size={15} />}>
+            <Tabs.Tab
+              value="link"
+              leftSection={<IconLink size={14} />}
+              style={{ padding: '8px 10px', fontSize: 13 }}
+            >
               Paste Link
             </Tabs.Tab>
           </Tabs.List>
